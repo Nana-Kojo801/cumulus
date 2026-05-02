@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { IconCheck, IconChevronDown, IconChevronRight, IconWarning, IconLoader } from '@/components/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -32,12 +32,10 @@ export function CanvasSyncPreview() {
   const [error, setError] = useState<string | null>(null);
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
 
-  // User-controlled state for the preview
   const [credits, setCredits] = useState<Record<number, number>>({});
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [expandedCourses, setExpandedCourses] = useState<Set<number>>(new Set());
 
-  // Start sync automatically if connection exists and we're not in idle
   const runFetch = useCallback(async () => {
     if (!connection) return;
     setPhase('fetching');
@@ -59,7 +57,6 @@ export function CanvasSyncPreview() {
         });
       });
 
-      // Initialise user selections: all courses selected, credits default to 3
       const defaultCredits: Record<number, number> = {};
       const defaultSelected = new Set<number>();
       for (const sem of result.semesters) {
@@ -137,7 +134,7 @@ export function CanvasSyncPreview() {
             transition={{ type: 'spring', bounce: 0.4 }}
             className="w-16 h-16 rounded-full bg-(--c-grade-a)/20 border border-(--c-grade-a)/30 flex items-center justify-center"
           >
-            <Check size={28} className="text-(--c-grade-a)" />
+            <IconCheck size={28} className="text-(--c-grade-a)" />
           </motion.div>
           <div className="text-center">
             <div className="text-[18px] font-medium text-(--c-text) mb-1">Sync complete</div>
@@ -161,7 +158,7 @@ export function CanvasSyncPreview() {
         {/* Error */}
         {error && (
           <Card className="p-4 border-(--c-grade-e)/30 bg-(--c-grade-e)/8 flex items-start gap-3">
-            <AlertTriangle size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
+            <IconWarning size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="text-[13px] text-(--c-grade-e) font-medium mb-1">Sync failed</div>
               <div className="text-[13px] text-(--c-text-3)">{error}</div>
@@ -191,8 +188,8 @@ export function CanvasSyncPreview() {
                       className="flex items-center gap-2 text-[13px]"
                     >
                       {step.done
-                        ? <Check size={14} className="text-(--c-grade-a) shrink-0" />
-                        : <Loader2 size={14} className="text-(--c-accent) shrink-0 animate-spin" />
+                        ? <IconCheck size={14} className="text-(--c-grade-a) shrink-0" />
+                        : <IconLoader size={14} className="text-(--c-accent) shrink-0 animate-spin" />
                       }
                       <span className={step.done ? 'text-(--c-text-3)' : 'text-(--c-text-2)'}>
                         {step.label}
@@ -201,7 +198,7 @@ export function CanvasSyncPreview() {
                   ))}
                   {progressSteps.length === 0 && (
                     <div className="flex items-center gap-2 text-[13px] text-(--c-text-3)">
-                      <Loader2 size={14} className="text-(--c-accent) animate-spin" />
+                      <IconLoader size={14} className="text-(--c-accent) animate-spin" />
                       Connecting to Canvas…
                     </div>
                   )}
@@ -247,7 +244,7 @@ export function CanvasSyncPreview() {
             {preview.warnings.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
                 <Card className="p-4 border-(--c-grade-c)/30 bg-(--c-grade-c)/8 flex items-start gap-3">
-                  <AlertTriangle size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
+                  <IconWarning size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[13px] font-medium text-(--c-grade-c) mb-1">
                       {preview.warnings.length === 1
@@ -307,7 +304,7 @@ export function CanvasSyncPreview() {
                                 : 'bg-(--c-surface-2) border-(--c-line-2)'
                             )}
                           >
-                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                            {isSelected && <IconCheck size={12} className="text-white" strokeWidth={3} />}
                           </button>
 
                           {/* Course info */}
@@ -354,8 +351,8 @@ export function CanvasSyncPreview() {
                             className="p-1 text-(--c-text-4) hover:text-(--c-text) transition-colors cursor-pointer shrink-0"
                           >
                             {isExpanded
-                              ? <ChevronDown size={14} />
-                              : <ChevronRight size={14} />}
+                              ? <IconChevronDown size={14} />
+                              : <IconChevronRight size={14} />}
                           </button>
                         </div>
 
@@ -418,7 +415,7 @@ export function CanvasSyncPreview() {
         {/* Importing */}
         {phase === 'importing' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 size={32} className="text-(--c-accent) animate-spin" />
+            <IconLoader size={32} className="text-(--c-accent) animate-spin" />
             <div className="text-[15px] text-(--c-text-2)">Saving to Cumulus…</div>
           </motion.div>
         )}

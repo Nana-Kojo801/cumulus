@@ -1,7 +1,7 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { IconChevronDown, IconChevronUp, IconCheck } from '@/components/icons';
 
 export const Select = SelectPrimitive.Root;
 export const SelectGroup = SelectPrimitive.Group;
@@ -14,11 +14,11 @@ export const SelectTrigger = forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'h-11 flex items-center justify-between gap-2 w-full px-3',
-      'rounded-(--radius-r2) border border-(--c-line)',
-      'bg-(--c-bg-2) text-(--c-text) text-[16px] sm:text-[15px]',
+      'h-11 flex items-center justify-between gap-2 w-full px-3.5',
+      'rounded-(--radius-r2) border border-(--c-line-2)',
+      'bg-(--c-surface-2) text-(--c-text) text-[15px]',
       'outline-none transition-all cursor-pointer',
-      'focus:border-(--c-accent) focus:ring-1 focus:ring-(--c-accent)',
+      'focus:border-(--c-accent) focus:ring-2 focus:ring-(--c-accent)/20',
       'data-[placeholder]:text-(--c-text-4)',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       className
@@ -27,7 +27,7 @@ export const SelectTrigger = forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown size={16} className="text-(--c-text-3) shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      <IconChevronDown size={15} className="text-(--c-text-3) shrink-0" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -44,7 +44,7 @@ export const SelectContent = forwardRef<
         'relative z-50 min-w-[var(--radix-select-trigger-width)]',
         'overflow-hidden rounded-(--radius-r3)',
         'bg-(--c-surface) border border-(--c-line-2)',
-        'shadow-[0_8px_32px_oklch(0_0_0/0.45)]',
+        'shadow-elevated',
         'data-[state=open]:[animation:selectOpen_0.15s_ease-out]',
         'data-[state=closed]:[animation:selectClose_0.1s_ease-in]',
         className
@@ -54,13 +54,13 @@ export const SelectContent = forwardRef<
       {...props}
     >
       <SelectPrimitive.ScrollUpButton className="flex cursor-default items-center justify-center py-1 text-(--c-text-3)">
-        <ChevronUp size={14} />
+        <IconChevronUp size={14} />
       </SelectPrimitive.ScrollUpButton>
       <SelectPrimitive.Viewport className="p-1">
         {children}
       </SelectPrimitive.Viewport>
       <SelectPrimitive.ScrollDownButton className="flex cursor-default items-center justify-center py-1 text-(--c-text-3)">
-        <ChevronDown size={14} />
+        <IconChevronDown size={14} />
       </SelectPrimitive.ScrollDownButton>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
@@ -98,7 +98,7 @@ export const SelectItem = forwardRef<
   >
     <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check size={14} className="text-(--c-accent)" />
+        <IconCheck size={14} className="text-(--c-accent)" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, TrendingUp, Settings, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSemesters, useActiveSemester } from '@/hooks/useSemesters';
 import { useCourses } from '@/hooks/useCourses';
@@ -8,10 +7,12 @@ import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, courseRunningGrade } from '@/lib/calculations';
 import { fmtGPA } from '@/lib/utils';
 import type { Course } from '@/db/schema';
+import {
+  IconHome, IconCalendar, IconBarChart, IconSliders, IconX,
+} from '@/components/icons';
 
 interface SidebarProps {
   collapsed?: boolean;
-  /** When set, sidebar renders as a mobile drawer and this fires on close */
   onClose?: () => void;
 }
 
@@ -31,22 +32,22 @@ function NavItem({
   onClick?: () => void;
 }) {
   return (
-    <NavLink
-      to={to}
-      end={end}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2.5 px-3 py-2.5 rounded-(--radius-r2) transition-all text-[14px]',
+    <NavLink to={to} end={end} onClick={onClick} className="block">
+      {({ isActive }) => (
+        <div className={cn(
+          'relative flex items-center gap-2.5 px-3 py-2.5 rounded-(--radius-r2) transition-all text-[13px] font-medium cursor-pointer',
           isActive
-            ? 'bg-(--c-surface-2) text-(--c-text) border border-(--c-line-2)'
+            ? 'bg-(--c-accent-bg) text-(--c-accent)'
             : 'text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text-2)',
           collapsed && 'justify-center px-2'
-        )
-      }
-    >
-      <Icon size={16} className="shrink-0" />
-      {!collapsed && <span>{label}</span>}
+        )}>
+          {isActive && (
+            <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-(--c-accent)" />
+          )}
+          <Icon size={16} className="shrink-0" />
+          {!collapsed && <span className="truncate">{label}</span>}
+        </div>
+      )}
     </NavLink>
   );
 }
@@ -63,31 +64,27 @@ function CourseNavItem({
   onClick?: () => void;
 }) {
   return (
-    <NavLink
-      to={`/courses/${course.id}`}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2 px-3 py-2 rounded-(--radius-r2) transition-all',
+    <NavLink to={`/courses/${course.id}`} onClick={onClick} className="block">
+      {({ isActive }) => (
+        <div className={cn(
+          'relative flex items-center gap-2 px-3 py-2 rounded-(--radius-r2) transition-all cursor-pointer',
           isActive
-            ? 'bg-(--c-surface-2) text-(--c-text) border border-(--c-line-2)'
+            ? 'bg-(--c-accent-bg) text-(--c-accent)'
             : 'text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text-2)',
           collapsed && 'justify-center px-2'
-        )
-      }
-    >
-      {!collapsed ? (
-        <>
-          {course.code && (
-            <span className="font-mono text-[11px] text-(--c-text-4) uppercase shrink-0 w-[52px] truncate">
-              {course.code}
-            </span>
+        )}>
+          {isActive && (
+            <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-(--c-accent)" />
           )}
-          <span className="text-[13px] flex-1 truncate">{course.name}</span>
-          <span className="text-[12px] font-mono tabular-nums text-(--c-text-3) shrink-0">{grade}</span>
-        </>
-      ) : (
-        <BookOpen size={15} className="shrink-0" />
+          {!collapsed ? (
+            <>
+              <span className="text-[13px] flex-1 truncate">{course.name}</span>
+              <span className="text-[12px] font-mono tabular-nums text-(--c-text-4) shrink-0">{grade}</span>
+            </>
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-(--c-surface-3)" />
+          )}
+        </div>
       )}
     </NavLink>
   );
@@ -102,23 +99,22 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
 
   const cumGPA = cumulativeGPA(semesters, courses, criteria, entries);
   const activeCourses = courses.filter(c => c.semesterId === activeSemester?.id);
-
   const isDrawer = !!onClose;
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col h-full bg-(--c-bg-2) border-r border-(--c-line) shrink-0 transition-all duration-200',
-        isDrawer ? 'w-72' : collapsed ? 'w-16' : 'w-60'
-      )}
-    >
+    <aside className={cn(
+      'flex flex-col h-full bg-(--c-bg-2) border-r border-(--c-line) shrink-0 transition-all duration-200',
+      isDrawer ? 'w-72' : collapsed ? 'w-16' : 'w-60'
+    )}>
       {/* Brand */}
       <div className={cn('px-4 py-4 border-b border-(--c-line) shrink-0', collapsed && !isDrawer && 'px-2')}>
         <div className={cn('flex items-center gap-3', collapsed && !isDrawer && 'justify-center')}>
-          <CloudMark />
+          <CumulusMark />
           {(!collapsed || isDrawer) && (
             <div className="flex-1 min-w-0">
-              <div className="text-[15px] font-semibold tracking-tight text-(--c-text)">Cumulus</div>
+              <div className="text-[15px] font-bold tracking-tight text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
+                Cumulus
+              </div>
               <div className="text-[10px] font-mono text-(--c-text-4)">v1.0 · local</div>
             </div>
           )}
@@ -127,7 +123,7 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text) transition-all cursor-pointer shrink-0"
             >
-              <X size={16} />
+              <IconX size={16} />
             </button>
           )}
         </div>
@@ -138,23 +134,23 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
         {/* Workspace */}
         <section>
           {(!collapsed || isDrawer) && (
-            <div className="px-3 mb-1">
-              <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4)">Workspace</span>
+            <div className="px-3 mb-1.5">
+              <span className="text-[10px] uppercase tracking-[0.12em] text-(--c-text-4) font-semibold">Workspace</span>
             </div>
           )}
           <div className="flex flex-col gap-0.5">
-            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" collapsed={collapsed && !isDrawer} end onClick={onClose} />
-            <NavItem to="/semesters" icon={BookOpen} label="Semesters" collapsed={collapsed && !isDrawer} onClick={onClose} />
-            <NavItem to="/simulator" icon={TrendingUp} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            <NavItem to="/" icon={IconHome} label="Dashboard" collapsed={collapsed && !isDrawer} end onClick={onClose} />
+            <NavItem to="/semesters" icon={IconCalendar} label="Semesters" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            <NavItem to="/simulator" icon={IconBarChart} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
           </div>
         </section>
 
-        {/* Active Semester courses */}
+        {/* Active semester courses */}
         {activeSemester && activeCourses.length > 0 && (
           <section>
             {(!collapsed || isDrawer) && (
-              <div className="px-3 mb-1">
-                <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4) truncate block">
+              <div className="px-3 mb-1.5">
+                <span className="text-[10px] uppercase tracking-[0.12em] text-(--c-text-4) font-semibold truncate block">
                   {activeSemester.name}
                 </span>
               </div>
@@ -181,29 +177,31 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
         {/* System */}
         <section>
           {(!collapsed || isDrawer) && (
-            <div className="px-3 mb-1">
-              <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4)">System</span>
+            <div className="px-3 mb-1.5">
+              <span className="text-[10px] uppercase tracking-[0.12em] text-(--c-text-4) font-semibold">System</span>
             </div>
           )}
           <div className="flex flex-col gap-0.5">
-            <NavItem to="/settings" icon={Settings} label="Settings" collapsed={collapsed && !isDrawer} onClick={onClose} />
-            <NavItem to="/import" icon={Upload} label="Import Template" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            <NavItem to="/settings" icon={IconSliders} label="Settings" collapsed={collapsed && !isDrawer} onClick={onClose} />
           </div>
         </section>
       </nav>
 
-      {/* Cumulative GPA */}
-      <div className={cn('px-4 py-4 border-t border-(--c-line) shrink-0', collapsed && !isDrawer && 'px-2 py-3')}>
+      {/* Cumulative GPA footer */}
+      <div className={cn(
+        'px-4 py-4 border-t border-(--c-line) shrink-0',
+        collapsed && !isDrawer && 'px-2 py-3'
+      )}>
         {collapsed && !isDrawer ? (
           <div className="text-center font-mono text-[11px] text-(--c-text-3) tabular-nums">
             {fmtGPA(cumGPA.gpa)}
           </div>
         ) : (
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-4) mb-0.5">Cumulative GPA</div>
+            <div className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4) font-semibold mb-0.5">Cumulative GPA</div>
             <div
-              className="tabular-nums font-semibold text-(--c-text)"
-              style={{ fontSize: '28px', letterSpacing: '-0.028em' }}
+              className="tabular-nums font-bold text-(--c-text)"
+              style={{ fontSize: '30px', letterSpacing: '-0.03em', lineHeight: 1 }}
             >
               {fmtGPA(cumGPA.gpa)}
             </div>
@@ -214,16 +212,19 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
   );
 }
 
-function CloudMark() {
+function CumulusMark() {
   return (
     <div
-      className="w-8 h-8 rounded-(--radius-r1) shrink-0 flex items-center justify-center"
-      style={{ background: 'var(--c-surface-2)', border: '1px solid var(--c-line-2)' }}
+      className="w-8 h-8 rounded-(--radius-r2) shrink-0 flex items-center justify-center"
+      style={{
+        background: 'linear-gradient(135deg, var(--c-accent-bg) 0%, var(--c-accent)/20 100%)',
+        border: '1px solid var(--c-accent)/25',
+      }}
     >
-      <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
         <path
-          d="M15.5 6C15.5 3.51 13.49 1.5 11 1.5C9.26 1.5 7.76 2.49 7.01 3.93C6.68 3.77 6.31 3.68 5.92 3.68C4.52 3.68 3.38 4.82 3.38 6.22C3.38 6.26 3.38 6.3 3.39 6.34C2.29 6.64 1.5 7.65 1.5 8.85C1.5 10.32 2.7 11.5 4.18 11.5H15.82C17.57 11.5 19 10.08 19 8.32C19 6.86 17.98 5.64 16.61 5.25C16.24 5.58 15.88 5.8 15.5 6Z"
-          fill="white"
+          d="M14 5C14 2.79 12.21 1 10 1C8.55 1 7.29 1.76 6.56 2.9C6.27 2.76 5.95 2.68 5.61 2.68C4.42 2.68 3.46 3.64 3.46 4.83C3.46 4.87 3.46 4.9 3.47 4.94C2.52 5.21 1.8 6.08 1.8 7.12C1.8 8.38 2.83 9.4 4.09 9.4H13.91C15.39 9.4 16.6 8.19 16.6 6.71C16.6 5.48 15.77 4.44 14.65 4.1C14.43 4.42 14.22 4.72 14 5Z"
+          fill="var(--c-accent)"
           fillOpacity="0.9"
         />
       </svg>

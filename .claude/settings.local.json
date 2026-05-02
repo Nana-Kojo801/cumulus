@@ -30,7 +30,10 @@
       "Bash(pnpm remove *)",
       "Bash(pnpm run *)",
       "Bash(pnpm approve-builds *)",
-      "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\src\" -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\convex\" -Recurse)"
     ]
   }
 }

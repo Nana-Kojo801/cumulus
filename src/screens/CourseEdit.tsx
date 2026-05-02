@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Minus, Plus } from 'lucide-react';
+import { IconMinus, IconPlus } from '@/components/icons';
 import { v4 as uuidv4 } from 'uuid';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -110,14 +110,14 @@ export function CourseEdit() {
                   onClick={() => setCredits(c => Math.max(1, c - 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
                 >
-                  <Minus size={14} />
+                  <IconMinus size={14} />
                 </button>
                 <span className="text-[22px] font-semibold tabular-nums text-(--c-text) w-8 text-center">{credits}</span>
                 <button
                   onClick={() => setCredits(c => Math.min(6, c + 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
                 >
-                  <Plus size={14} />
+                  <IconPlus size={14} />
                 </button>
                 <span className="text-[12px] text-(--c-text-3)">Typical Ashesi range: 1–4</span>
               </div>
