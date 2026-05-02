@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(npm create *)",
+      "PowerShell(Get-Command node, npm, bun, pnpm, yarn -ErrorAction SilentlyContinue)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell($env:PATH -split \";\" | Where-Object { $_ -match \"node|bun|nvm\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:APPDATA\\\\npm\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:LOCALAPPDATA\\\\pnpm\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:LOCALAPPDATA\\\\bun\" -ErrorAction SilentlyContinue)",
+      "PowerShell($paths = @\\(\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"C:\\\\Program Files \\(x86\\)\\\\nodejs\\\\node.exe\",\"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\\\\node.exe\",\"$env:APPDATA\\\\nvm\\\\current\\\\node.exe\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { Write-Output \"Found: $p\" } })",
+      "PowerShell($nodePath = \"C:\\\\Users\\\\PC\\\\AppData\\\\Local\\\\claude-cli-nodejs\"; Get-ChildItem $nodePath -ErrorAction SilentlyContinue | Select-Object Name; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\" | Select-Object Name)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm --version)",
+      "Bash(pnpm --version)",
+      "PowerShell(pnpm --version 2>$null)",
+      "PowerShell(pnpx --version 2>$null)",
+      "PowerShell(Get-Command pnpm -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command pnpx -ErrorAction SilentlyContinue)",
+      "PowerShell($env:PATH += \";C:\\\\Program Files\\\\nodejs\"; npm install -g pnpm; pnpm --version)",
+      "Bash(npm install *)",
+      "Bash(npm root *)",
+      "Bash(ls \"$\\(npm root -g\\)/.bin/\")",
+      "Bash(npm config *)",
+      "Read(//c/Users/PC/AppData/Roaming/npm//**)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:/c/Users/PC/AppData/Roaming/npm:$PATH\")",
+      "Bash(pnpx create-vite *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm remove *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm approve-builds *)",
+      "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  /* Both sans and serif point to Inter — keeps all existing font-serif class
+     usages working without touching every component file. */
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* App design-system tokens — plain CSS custom properties, not Tailwind theme */
+:root {
+  --c-bg:        oklch(0.16 0.012 250);
+  --c-bg-2:      oklch(0.19 0.012 250);
+  --c-surface:   oklch(0.215 0.014 250);
+  --c-surface-2: oklch(0.245 0.014 250);
+  --c-surface-3: oklch(0.28 0.015 250);
+  --c-elevated:  oklch(0.235 0.014 250);
+
+  --c-line:      oklch(1 0 0 / 0.07);
+  --c-line-2:    oklch(1 0 0 / 0.12);
+  --c-line-3:    oklch(1 0 0 / 0.18);
+
+  --c-text:      oklch(0.96 0.005 250);
+  --c-text-2:    oklch(0.78 0.008 250);
+  --c-text-3:    oklch(0.6 0.01 250);
+  --c-text-4:    oklch(0.46 0.012 250);
+
+  --c-accent:    oklch(0.82 0.09 230);
+  --c-accent-2:  oklch(0.72 0.11 230);
+  --c-accent-bg: oklch(0.82 0.09 230 / 0.12);
+
+  --c-grade-a:   oklch(0.82 0.09 155);
+  --c-grade-b:   oklch(0.82 0.09 95);
+  --c-grade-c:   oklch(0.78 0.1 60);
+  --c-grade-d:   oklch(0.74 0.1 30);
+  --c-grade-e:   oklch(0.7 0.1 15);
+
+  --radius-r1: 6px;
+  --radius-r2: 10px;
+  --radius-r3: 14px;
+  --radius-r4: 18px;
+  --radius-r5: 22px;
+}
+
+/*
+  DO NOT add a bare `* { margin: 0; padding: 0 }` reset here.
+  In Tailwind v4, utilities live inside @layer utilities. Unlayered CSS
+  has higher cascade priority than any named @layer, so an unlayered `*`
+  rule would silently override every padding/margin utility class.
+  Tailwind's own preflight (included via @import "tailwindcss") handles
+  the box-model reset inside @layer base, where it belongs.
+*/
+
+html, body, #root {
+  height: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-line-3); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-text-4); }
+
+/* Diagonal stripe for pending (unscored) entries */
+.pending-stripe {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    oklch(1 0 0 / 0.025) 4px,
+    oklch(1 0 0 / 0.025) 8px
+  );
+}
+
+/* Number inputs — hide browser spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }
+
+/* Select dropdown animation */
+@keyframes selectOpen {
+  from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes selectClose {
+  from { opacity: 1; transform: scale(1)    translateY(0); }
+  to   { opacity: 0; transform: scale(0.96) translateY(-6px); }
+}

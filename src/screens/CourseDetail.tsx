@@ -1,0 +1,351 @@
+import { useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Share2, Target } from 'lucide-react';
+import { Topbar } from '@/components/layout/Topbar';
+import { useMenuOpen } from '@/components/layout/AppShell';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { GradePill } from '@/components/ui/GradePill';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+import { Chip } from '@/components/ui/Chip';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CriterionModal } from '@/components/modals/CriterionModal';
+import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
+import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
+import { TemplateExportModal } from '@/components/modals/TemplateExportModal';
+import { useCourse } from '@/hooks/useCourses';
+import { useSemester } from '@/hooks/useSemesters';
+import { useCriteriaByCourse } from '@/hooks/useCriteria';
+import { useScoreEntries } from '@/hooks/useScoreEntries';
+import { courseRunningGrade, criterionAverage, letterFor } from '@/lib/calculations';
+import { bandFor } from '@/lib/gradeScale';
+import { fmtPct } from '@/lib/utils';
+import { db } from '@/db/schema';
+import type { Criterion } from '@/db/schema';
+import { useToast } from '@/components/ui/Toast';
+import { cn } from '@/lib/utils';
+
+const BAND_BORDER: Record<string, string> = {
+  a: 'var(--c-grade-a)',
+  b: 'var(--c-grade-b)',
+  c: 'var(--c-grade-c)',
+  d: 'var(--c-grade-d)',
+  e: 'var(--c-grade-e)',
+};
+
+export function CourseDetail() {
+  const onMenuOpen = useMenuOpen();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const course = useCourse(id);
+  const semester = useSemester(course?.semesterId);
+  const criteria = useCriteriaByCourse(id) ?? [];
+  const allEntries = useScoreEntries() ?? [];
+  const entries = allEntries.filter(e => criteria.some(cr => cr.id === e.criterionId));
+
+  const [showCriterionModal, setShowCriterionModal] = useState(false);
+  const [editingCriterion, setEditingCriterion] = useState<Criterion | undefined>();
+  const [scoringCriterionId, setScoringCriterionId] = useState<string | null>(null);
+  const [showWhatScore, setShowWhatScore] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [deleteCritId, setDeleteCritId] = useState<string | null>(null);
+
+  const scoringCriterion = criteria.find(c => c.id === scoringCriterionId);
+  const scoringCriterionRef = useRef<Criterion | undefined>(undefined);
+  if (scoringCriterion) scoringCriterionRef.current = scoringCriterion;
+
+  if (!course) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <Topbar breadcrumbs={[{ label: 'Courses' }, { label: 'Loading…' }]} onMenuOpen={onMenuOpen} />
+        <div className="flex-1 flex items-center justify-center text-(--c-text-3)">Loading…</div>
+      </div>
+    );
+  }
+
+  const { pct, weightCompleted } = courseRunningGrade(course, criteria, entries);
+  const letter = pct !== null ? letterFor(pct) : null;
+  const gradeBand = letter ? bandFor(letter) : null;
+
+  const totalWeight = criteria.reduce((a, c) => a + c.weight, 0);
+  const weightColor =
+    totalWeight === 100
+      ? 'text-(--c-accent)'
+      : totalWeight > 100
+      ? 'text-(--c-grade-e)'
+      : 'text-(--c-grade-c)';
+
+  const pendingWeight = 100 - weightCompleted;
+  const bestCase = pct !== null
+    ? Math.min(100, (pct * weightCompleted / 100) + pendingWeight)
+    : pendingWeight;
+  const worstCase = pct !== null ? (pct * weightCompleted / 100) : 0;
+
+  const gradeTextColor = gradeBand
+    ? { a: 'text-(--c-grade-a)', b: 'text-(--c-grade-b)', c: 'text-(--c-grade-c)', d: 'text-(--c-grade-d)', e: 'text-(--c-grade-e)' }[gradeBand]
+    : 'text-(--c-text)';
+
+  async function handleDeleteCriterion(critId: string) {
+    const critEntries = allEntries.filter(e => e.criterionId === critId);
+    await db.transaction('rw', db.criteria, db.scoreEntries, async () => {
+      await db.scoreEntries.bulkDelete(critEntries.map(e => e.id));
+      await db.criteria.delete(critId);
+    });
+    toast('Criterion deleted');
+  }
+
+  const breadcrumbs = [
+    { label: 'Semesters', to: '/semesters' },
+    ...(semester ? [{ label: semester.name, to: `/semesters/${semester.id}` }] : []),
+    { label: course.name },
+  ];
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <Topbar
+        breadcrumbs={breadcrumbs}
+        onMenuOpen={onMenuOpen}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowExport(true)}>
+              <Share2 size={14} /> Export Template
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
+              <Pencil size={14} /> Edit
+            </Button>
+          </div>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+        {/* Header */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-[22px] font-medium text-(--c-text)" style={{ letterSpacing: '-0.018em' }}>
+                {course.name}
+              </h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Chip>{course.credits} credits</Chip>
+            {letter && <GradePill letter={letter} size="lg" />}
+          </div>
+          <div
+            className={cn('tabular-nums font-semibold', gradeTextColor)}
+            style={{ fontSize: '52px', letterSpacing: '-0.028em', lineHeight: 1 }}
+          >
+            {fmtPct(pct, 1)}
+          </div>
+          <div className="flex flex-col gap-1">
+            <ProgressBar value={weightCompleted} />
+            <span className="text-[12px] text-(--c-text-3)">{weightCompleted.toFixed(0)}% of grade scored</span>
+          </div>
+        </div>
+
+        {/* Grade Forecast */}
+        {criteria.length > 0 && (
+          <Card className="p-4 flex flex-col gap-4">
+            <h3 className="text-[14px] font-medium text-(--c-text)">Grade Forecast</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-(--c-grade-a)/8 border border-(--c-grade-a)/20 rounded-(--radius-r2) p-3">
+                <div className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-3) mb-1">Best case</div>
+                <div className="text-[18px] font-semibold tabular-nums text-(--c-grade-a)">
+                  {letterFor(bestCase)} · {bestCase.toFixed(1)}%
+                </div>
+              </div>
+              <div className="bg-(--c-grade-e)/8 border border-(--c-grade-e)/20 rounded-(--radius-r2) p-3">
+                <div className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-3) mb-1">Worst case</div>
+                <div className="text-[18px] font-semibold tabular-nums text-(--c-grade-e)">
+                  {letterFor(worstCase)} · {worstCase.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="default"
+              onClick={() => setShowWhatScore(true)}
+              className="self-start"
+            >
+              <Target size={14} /> What score do I need?
+            </Button>
+          </Card>
+        )}
+
+        {/* Criteria */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[16px] font-medium text-(--c-text)">Evaluation Criteria</h2>
+            <Button variant="ghost" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
+              <Plus size={13} /> Add Criterion
+            </Button>
+          </div>
+
+          {criteria.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-(--c-text-3) text-[14px] mb-3">No criteria yet. Add evaluation components to track your grade.</p>
+              <Button variant="primary" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
+                <Plus size={14} /> Add Criterion
+              </Button>
+            </Card>
+          ) : (
+            <Card className="divide-y divide-(--c-line) overflow-hidden">
+              {criteria.map(crit => {
+                const critEntries = entries.filter(e => e.criterionId === crit.id);
+                const avg = criterionAverage(critEntries);
+                const contribution = avg !== null ? avg * (crit.weight / 100) : null;
+                const scored = critEntries.filter(e => e.score !== null).length;
+                const avgLetter = avg !== null ? letterFor(avg) : null;
+                const avgBand = avgLetter ? bandFor(avgLetter) : null;
+                const borderColor = avgBand ? BAND_BORDER[avgBand] : undefined;
+
+                return (
+                  <div
+                    key={crit.id}
+                    style={borderColor ? { borderLeft: `3px solid ${borderColor}` } : {}}
+                  >
+                    {/* Mobile layout */}
+                    <div className="sm:hidden px-4 py-3.5 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[15px] text-(--c-text) font-medium truncate flex-1">{crit.name}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {avgLetter && <GradePill letter={avgLetter} size="sm" />}
+                          <Chip variant="default" className="text-[11px]">{crit.weight}%</Chip>
+                        </div>
+                      </div>
+                      <ProgressBar value={avg ?? 0} />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[12px] text-(--c-text-3)">
+                          {scored}/{critEntries.length} scored · avg {avg !== null ? `${avg.toFixed(1)}%` : '—'}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
+                            onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
+                            onClick={() => setDeleteCritId(crit.id)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setScoringCriterionId(crit.id)}
+                      >
+                        Score
+                      </Button>
+                    </div>
+
+                    {/* Desktop layout */}
+                    <div className="hidden sm:flex items-center gap-3 px-4 py-3.5">
+                      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[14px] text-(--c-text) font-medium">{crit.name}</span>
+                          <Chip variant="default" className="text-[11px]">{crit.weight}%</Chip>
+                          <span className="text-[12px] text-(--c-text-3)">
+                            {scored}/{critEntries.length} scored
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <ProgressBar value={avg ?? 0} className="w-24" />
+                          <span className="text-[12px] font-mono tabular-nums text-(--c-text-3)">
+                            avg {avg !== null ? `${avg.toFixed(1)}%` : '—'}
+                          </span>
+                          <span className="text-[12px] font-mono tabular-nums text-(--c-text-3)">
+                            contributes {contribution !== null ? `${contribution.toFixed(1)}pts` : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => setScoringCriterionId(crit.id)}
+                        >
+                          Score
+                        </Button>
+                        <button
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
+                          onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
+                          onClick={() => setDeleteCritId(crit.id)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </Card>
+          )}
+
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[12px] text-(--c-text-3)">Total weight</span>
+            <span className={cn('text-[13px] font-mono font-semibold tabular-nums', weightColor)}>
+              {totalWeight}%{totalWeight === 100 ? ' ✓' : ''}
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <CriterionModal
+        open={showCriterionModal}
+        onClose={() => { setShowCriterionModal(false); setEditingCriterion(undefined); }}
+        courseId={course.id}
+        existingCriteria={criteria}
+        editing={editingCriterion}
+      />
+
+      {scoringCriterionRef.current && (
+        <ScoreEntryModal
+          open={!!scoringCriterionId}
+          onClose={() => setScoringCriterionId(null)}
+          criterion={scoringCriterionRef.current}
+          course={course}
+          entries={entries.filter(e => e.criterionId === (scoringCriterionId ?? scoringCriterionRef.current?.id))}
+        />
+      )}
+
+      <WhatScoreModal
+        open={showWhatScore}
+        onClose={() => setShowWhatScore(false)}
+        course={course}
+        criteria={criteria}
+        entries={entries}
+      />
+
+      <TemplateExportModal
+        open={showExport}
+        onClose={() => setShowExport(false)}
+        course={course}
+        criteria={criteria}
+      />
+
+      <ConfirmDialog
+        open={deleteCritId !== null}
+        onClose={() => setDeleteCritId(null)}
+        onConfirm={() => deleteCritId && handleDeleteCriterion(deleteCritId)}
+        title="Delete Criterion"
+        description="This will permanently delete this criterion and all its score entries."
+        confirmLabel="Delete"
+        variant="danger"
+      />
+    </div>
+  );
+}
