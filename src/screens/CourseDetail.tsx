@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Share2, Target } from 'lucide-react';
+import { IconPlus, IconEdit, IconTrash, IconTarget } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
@@ -13,7 +13,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CriterionModal } from '@/components/modals/CriterionModal';
 import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
 import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
-import { TemplateExportModal } from '@/components/modals/TemplateExportModal';
 import { useCourse } from '@/hooks/useCourses';
 import { useSemester } from '@/hooks/useSemesters';
 import { useCriteriaByCourse } from '@/hooks/useCriteria';
@@ -50,7 +49,6 @@ export function CourseDetail() {
   const [editingCriterion, setEditingCriterion] = useState<Criterion | undefined>();
   const [scoringCriterionId, setScoringCriterionId] = useState<string | null>(null);
   const [showWhatScore, setShowWhatScore] = useState(false);
-  const [showExport, setShowExport] = useState(false);
   const [deleteCritId, setDeleteCritId] = useState<string | null>(null);
 
   const scoringCriterion = criteria.find(c => c.id === scoringCriterionId);
@@ -109,14 +107,9 @@ export function CourseDetail() {
         breadcrumbs={breadcrumbs}
         onMenuOpen={onMenuOpen}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowExport(true)}>
-              <Share2 size={14} /> Export Template
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
-              <Pencil size={14} /> Edit
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
+            <IconEdit size={14} /> Edit
+          </Button>
         }
       />
 
@@ -169,7 +162,7 @@ export function CourseDetail() {
               onClick={() => setShowWhatScore(true)}
               className="self-start"
             >
-              <Target size={14} /> What score do I need?
+              <IconTarget size={14} /> What score do I need?
             </Button>
           </Card>
         )}
@@ -179,7 +172,7 @@ export function CourseDetail() {
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-medium text-(--c-text)">Evaluation Criteria</h2>
             <Button variant="ghost" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
-              <Plus size={13} /> Add Criterion
+              <IconPlus size={13} /> Add Criterion
             </Button>
           </div>
 
@@ -187,7 +180,7 @@ export function CourseDetail() {
             <Card className="p-8 text-center">
               <p className="text-(--c-text-3) text-[14px] mb-3">No criteria yet. Add evaluation components to track your grade.</p>
               <Button variant="primary" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
-                <Plus size={14} /> Add Criterion
+                <IconPlus size={14} /> Add Criterion
               </Button>
             </Card>
           ) : (
@@ -225,13 +218,13 @@ export function CourseDetail() {
                             className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
                             onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                           >
-                            <Pencil size={13} />
+                            <IconEdit size={13} />
                           </button>
                           <button
                             className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
                             onClick={() => setDeleteCritId(crit.id)}
                           >
-                            <Trash2 size={13} />
+                            <IconTrash size={13} />
                           </button>
                         </div>
                       </div>
@@ -277,13 +270,13 @@ export function CourseDetail() {
                           className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
                           onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                         >
-                          <Pencil size={13} />
+                          <IconEdit size={13} />
                         </button>
                         <button
                           className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
                           onClick={() => setDeleteCritId(crit.id)}
                         >
-                          <Trash2 size={13} />
+                          <IconTrash size={13} />
                         </button>
                       </div>
                     </div>
@@ -328,13 +321,6 @@ export function CourseDetail() {
         course={course}
         criteria={criteria}
         entries={entries}
-      />
-
-      <TemplateExportModal
-        open={showExport}
-        onClose={() => setShowExport(false)}
-        course={course}
-        criteria={criteria}
       />
 
       <ConfirmDialog

@@ -1,57 +1,55 @@
 @import "tailwindcss";
 
 @theme {
-  /* Both sans and serif point to Inter — keeps all existing font-serif class
-     usages working without touching every component file. */
   --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* App design-system tokens — plain CSS custom properties, not Tailwind theme */
+/* ─── Design-system tokens ──────────────────────────────────────────────── */
 :root {
-  --c-bg:        oklch(0.16 0.012 250);
-  --c-bg-2:      oklch(0.19 0.012 250);
-  --c-surface:   oklch(0.215 0.014 250);
-  --c-surface-2: oklch(0.245 0.014 250);
-  --c-surface-3: oklch(0.28 0.015 250);
-  --c-elevated:  oklch(0.235 0.014 250);
+  /* Backgrounds */
+  --c-bg:        oklch(0.14 0.013 252);
+  --c-bg-2:      oklch(0.17 0.013 252);
 
+  /* Card / surface layers */
+  --c-surface:   oklch(0.20 0.015 252);
+  --c-surface-2: oklch(0.23 0.015 252);
+  --c-surface-3: oklch(0.27 0.017 252);
+  --c-elevated:  oklch(0.22 0.015 252);
+
+  /* Borders */
   --c-line:      oklch(1 0 0 / 0.07);
   --c-line-2:    oklch(1 0 0 / 0.12);
-  --c-line-3:    oklch(1 0 0 / 0.18);
+  --c-line-3:    oklch(1 0 0 / 0.19);
 
-  --c-text:      oklch(0.96 0.005 250);
-  --c-text-2:    oklch(0.78 0.008 250);
-  --c-text-3:    oklch(0.6 0.01 250);
-  --c-text-4:    oklch(0.46 0.012 250);
+  /* Text */
+  --c-text:      oklch(0.96 0.005 252);
+  --c-text-2:    oklch(0.78 0.008 252);
+  --c-text-3:    oklch(0.60 0.010 252);
+  --c-text-4:    oklch(0.44 0.012 252);
 
-  --c-accent:    oklch(0.82 0.09 230);
-  --c-accent-2:  oklch(0.72 0.11 230);
-  --c-accent-bg: oklch(0.82 0.09 230 / 0.12);
+  /* Accent — vivid blue */
+  --c-accent:    oklch(0.78 0.14 232);
+  --c-accent-2:  oklch(0.68 0.16 232);
+  --c-accent-bg: oklch(0.78 0.14 232 / 0.13);
 
-  --c-grade-a:   oklch(0.82 0.09 155);
-  --c-grade-b:   oklch(0.82 0.09 95);
-  --c-grade-c:   oklch(0.78 0.1 60);
-  --c-grade-d:   oklch(0.74 0.1 30);
-  --c-grade-e:   oklch(0.7 0.1 15);
+  /* Grade colours */
+  --c-grade-a:   oklch(0.80 0.13 155);
+  --c-grade-b:   oklch(0.80 0.13 118);
+  --c-grade-c:   oklch(0.78 0.14 75);
+  --c-grade-d:   oklch(0.74 0.14 40);
+  --c-grade-e:   oklch(0.70 0.14 20);
 
-  --radius-r1: 6px;
-  --radius-r2: 10px;
-  --radius-r3: 14px;
-  --radius-r4: 18px;
-  --radius-r5: 22px;
+  /* Border radii */
+  --radius-r1: 8px;
+  --radius-r2: 12px;
+  --radius-r3: 16px;
+  --radius-r4: 20px;
+  --radius-r5: 26px;
 }
 
-/*
-  DO NOT add a bare `* { margin: 0; padding: 0 }` reset here.
-  In Tailwind v4, utilities live inside @layer utilities. Unlayered CSS
-  has higher cascade priority than any named @layer, so an unlayered `*`
-  rule would silently override every padding/margin utility class.
-  Tailwind's own preflight (included via @import "tailwindcss") handles
-  the box-model reset inside @layer base, where it belongs.
-*/
-
+/* ─── Base ──────────────────────────────────────────────────────────────── */
 html, body, #root {
   height: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -62,13 +60,31 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--c-line-3); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--c-text-4); }
 
-/* Diagonal stripe for pending (unscored) entries */
+/* ─── Shadow utilities ──────────────────────────────────────────────────── */
+@layer utilities {
+  .shadow-card {
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.055),
+      0 2px 6px oklch(0 0 0 / 0.22);
+  }
+  .shadow-elevated {
+    box-shadow:
+      0 0 0 1px oklch(1 0 0 / 0.09),
+      0 8px 28px oklch(0 0 0 / 0.55),
+      0 3px 8px oklch(0 0 0 / 0.28);
+  }
+  .shadow-sheet {
+    box-shadow: -6px 0 32px oklch(0 0 0 / 0.42);
+  }
+}
+
+/* ─── Pending-stripe (unscored entries) ─────────────────────────────────── */
 .pending-stripe {
   background-image: repeating-linear-gradient(
     -45deg,
@@ -79,7 +95,7 @@ html, body, #root {
   );
 }
 
-/* Number inputs — hide browser spinners */
+/* ─── Number inputs — hide browser spinners ─────────────────────────────── */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -87,7 +103,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] { -moz-appearance: textfield; }
 
-/* Select dropdown animation */
+/* ─── Select dropdown animations ────────────────────────────────────────── */
 @keyframes selectOpen {
   from { opacity: 0; transform: scale(0.96) translateY(-6px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }

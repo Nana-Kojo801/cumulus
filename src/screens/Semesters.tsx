@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, Trash2 } from 'lucide-react';
+import { IconPlus, IconChevronRight, IconTrash } from '@/components/icons';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
@@ -164,7 +164,7 @@ export function Semesters() {
         onMenuOpen={onMenuOpen}
         actions={
           <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
-            <Plus size={14} /> New Semester
+            <IconPlus size={14} /> New Semester
           </Button>
         }
       />
@@ -195,7 +195,7 @@ export function Semesters() {
           <Card className="p-10 text-center">
             <p className="text-(--c-text-3) text-[14px] mb-3">No semesters yet.</p>
             <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
-              <Plus size={14} /> New Semester
+              <IconPlus size={14} /> New Semester
             </Button>
           </Card>
         ) : (
@@ -240,9 +240,9 @@ export function Semesters() {
                           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-(--radius-r1) text-(--c-text-4) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
                           onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
                         >
-                          <Trash2 size={14} />
+                          <IconTrash size={14} />
                         </button>
-                        <ChevronRight size={14} className="text-(--c-text-4)" />
+                        <IconChevronRight size={14} className="text-(--c-text-4)" />
                       </div>
                     </div>
                   </Card>

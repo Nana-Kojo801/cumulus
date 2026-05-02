@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
-import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { IconX } from '@/components/icons';
 
 interface SheetProps {
   open: boolean;
@@ -24,16 +24,16 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             onClick={onClose}
           />
           <motion.div
             className={cn(
-              'relative w-full sm:w-[500px] h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-2xl flex flex-col',
+              'relative w-full sm:w-125 h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-sheet flex flex-col',
               className
             )}
             initial={{ x: '100%' }}
@@ -43,12 +43,12 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
           >
             {title && (
               <div className="flex items-center justify-between px-5 py-4 border-b border-(--c-line) shrink-0">
-                <h2 className="text-[16px] font-medium text-(--c-text)">{title}</h2>
+                <h2 className="text-[16px] font-semibold text-(--c-text) tracking-tight">{title}</h2>
                 <button
                   onClick={onClose}
                   className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-(--c-surface-2) text-(--c-text-3) hover:text-(--c-text) transition-all cursor-pointer"
                 >
-                  <X size={15} />
+                  <IconX size={15} />
                 </button>
               </div>
             )}

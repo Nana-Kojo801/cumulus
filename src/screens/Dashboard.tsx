@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Plus } from 'lucide-react';
+import { IconChevronRight, IconPlus } from '@/components/icons';
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -21,7 +21,7 @@ import { fmtGPA, fmtPct } from '@/lib/utils';
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.22, ease: 'easeOut', delay },
+  transition: { duration: 0.22, ease: 'easeOut' as const, delay },
 });
 
 const rowItem = {
@@ -29,7 +29,7 @@ const rowItem = {
   show: (i: number) => ({
     opacity: 1,
     x: 0,
-    transition: { duration: 0.18, ease: 'easeOut', delay: i * 0.05 },
+    transition: { duration: 0.18, ease: 'easeOut' as const, delay: i * 0.05 },
   }),
 };
 
@@ -182,7 +182,7 @@ export function Dashboard() {
             <Card className="p-8 text-center">
               <p className="text-(--c-text-3) text-[14px] mb-3">No courses in the active semester yet.</p>
               <Button variant="primary" size="sm" onClick={() => navigate('/courses/new')}>
-                <Plus size={14} /> Add Course
+                <IconPlus size={14} /> Add Course
               </Button>
             </Card>
           ) : (
@@ -215,7 +215,7 @@ export function Dashboard() {
                     ) : (
                       <span className="w-9" />
                     )}
-                    <ChevronRight size={14} className="text-(--c-text-4)" />
+                    <IconChevronRight size={14} className="text-(--c-text-4)" />
                   </motion.button>
                 );
               })}
@@ -254,7 +254,7 @@ export function Dashboard() {
                     <div className="text-[18px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
                       {fmtGPA(gpa)}
                     </div>
-                    <ChevronRight size={14} className="text-(--c-text-4)" />
+                    <IconChevronRight size={14} className="text-(--c-text-4)" />
                   </motion.button>
                 );
               })}

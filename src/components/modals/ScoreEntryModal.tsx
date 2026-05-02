@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus } from 'lucide-react';
+import { IconTrash, IconPlus } from '@/components/icons';
 import { v4 as uuidv4 } from 'uuid';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
@@ -184,7 +184,7 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
                   onClick={() => removeEntry(entry.id)}
                   className="p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-colors cursor-pointer"
                 >
-                  <Trash2 size={13} />
+                  <IconTrash size={13} />
                 </button>
               </div>
             );
@@ -193,7 +193,7 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
 
         <div className="px-4 pb-2">
           <Button variant="ghost" size="sm" onClick={addEntry}>
-            <Plus size={13} /> Add instance
+            <IconPlus size={13} /> Add instance
           </Button>
         </div>
 

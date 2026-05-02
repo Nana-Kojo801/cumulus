@@ -9,7 +9,6 @@ import { CourseDetail } from '@/screens/CourseDetail';
 import { CourseEdit } from '@/screens/CourseEdit';
 import { Simulator } from '@/screens/Simulator';
 import { Settings } from '@/screens/Settings';
-import { TemplateImport } from '@/screens/TemplateImport';
 import { CanvasSyncPreview } from '@/screens/CanvasSyncPreview';
 
 export default function App() {
@@ -36,7 +35,6 @@ export default function App() {
               <Route path="/courses/:id/edit" element={<CourseEdit />} />
               <Route path="/simulator" element={<Simulator />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/import" element={<TemplateImport />} />
               <Route path="/canvas/sync" element={<CanvasSyncPreview />} />
             </Routes>
           </motion.div>

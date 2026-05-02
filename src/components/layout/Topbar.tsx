@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { IconChevronRight } from '@/components/icons';
 
 export interface BreadcrumbItem {
   label: string;
@@ -13,14 +13,14 @@ interface TopbarProps {
   onMenuOpen?: () => void;
 }
 
-export function Topbar({ breadcrumbs, actions, onMenuOpen }: TopbarProps) {
+export function Topbar({ breadcrumbs, actions }: TopbarProps) {
   return (
-    <header className="h-12 flex items-center justify-between px-4 border-b border-(--c-line) bg-(--c-bg-2) shrink-0 gap-2">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+    <header className="h-12 flex items-center justify-between px-5 border-b border-(--c-line) bg-(--c-bg-2) shrink-0 gap-3">
+      <div className="flex items-center gap-1.5 min-w-0 flex-1">
         <nav className="flex items-center gap-1 min-w-0 overflow-hidden">
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1 min-w-0 shrink-0 last:min-w-0 last:shrink">
-              {i > 0 && <ChevronRight size={12} className="text-(--c-text-4) shrink-0" />}
+              {i > 0 && <IconChevronRight size={11} className="text-(--c-text-4) shrink-0" />}
               {crumb.to ? (
                 <Link
                   to={crumb.to}
@@ -29,7 +29,7 @@ export function Topbar({ breadcrumbs, actions, onMenuOpen }: TopbarProps) {
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-[13px] text-(--c-text) truncate font-medium">{crumb.label}</span>
+                <span className="text-[13px] font-semibold text-(--c-text) truncate">{crumb.label}</span>
               )}
             </span>
           ))}

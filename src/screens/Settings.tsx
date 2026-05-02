@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Download, Upload, Trash2, RotateCcw, Link2, Unlink, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
+import {
+  IconDownload, IconUpload, IconTrash, IconReset, IconLink, IconUnlink,
+  IconSync, IconExternalLink, IconLoader,
+} from '@/components/icons';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Topbar } from '@/components/layout/Topbar';
@@ -173,7 +176,7 @@ export function Settings() {
                   {/* Connected header */}
                   <div className="p-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-(--c-grade-a)/15 flex items-center justify-center shrink-0">
-                      <Link2 size={16} className="text-(--c-grade-a)" />
+                      <IconLink size={16} className="text-(--c-grade-a)" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[14px] font-medium text-(--c-text) truncate">{connection.studentName}</div>
@@ -199,11 +202,11 @@ export function Settings() {
                   {/* Actions */}
                   <div className="p-4 flex gap-2 flex-wrap">
                     <Button variant="primary" onClick={() => navigate('/canvas/sync')}>
-                      <RefreshCw size={14} />
+                      <IconSync size={14} />
                       {connection.lastSyncedAt ? 'Refresh scores' : 'Sync from Canvas'}
                     </Button>
                     <Button variant="danger" onClick={() => setShowDisconnect(true)}>
-                      <Unlink size={14} /> Disconnect
+                      <IconUnlink size={14} /> Disconnect
                     </Button>
                   </div>
                 </Card>
@@ -229,8 +232,8 @@ export function Settings() {
                         disabled={connecting || !canvasToken.trim()}
                       >
                         {connecting
-                          ? <Loader2 size={14} className="animate-spin" />
-                          : <Link2 size={14} />}
+                          ? <IconLoader size={14} className="animate-spin" />
+                          : <IconLink size={14} />}
                         {connecting ? 'Connecting…' : 'Connect'}
                       </Button>
                     </div>
@@ -250,7 +253,7 @@ export function Settings() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[12px] text-(--c-accent) hover:underline w-fit mt-0.5"
                     >
-                      <ExternalLink size={11} /> Open Canvas Settings
+                      <IconExternalLink size={11} /> Open Canvas Settings
                     </a>
                   </div>
                 </Card>
@@ -269,7 +272,7 @@ export function Settings() {
                     <div className="text-[12px] text-(--c-text-3)">Download a full JSON backup of all your data.</div>
                   </div>
                   <Button variant="default" onClick={handleExport}>
-                    <Download size={14} /> Export
+                    <IconDownload size={14} /> Export
                   </Button>
                 </div>
 
@@ -286,7 +289,7 @@ export function Settings() {
                       onChange={e => e.target.files?.[0] && handleImport(e.target.files[0])}
                     />
                     <span className="inline-flex items-center gap-1.5 h-9 px-4 text-[14px] rounded-full font-medium bg-(--c-surface-2) text-(--c-text) border border-(--c-line-2) hover:bg-(--c-surface-3) transition-all cursor-pointer">
-                      <Upload size={14} /> Import
+                      <IconUpload size={14} /> Import
                     </span>
                   </label>
                 </div>
@@ -297,7 +300,7 @@ export function Settings() {
                     <div className="text-[12px] text-(--c-text-3)">Restore the seed data to explore all features.</div>
                   </div>
                   <Button variant="default" onClick={() => setShowReset(true)}>
-                    <RotateCcw size={14} /> Reset Demo
+                    <IconReset size={14} /> Reset Demo
                   </Button>
                 </div>
 
@@ -307,7 +310,7 @@ export function Settings() {
                     <div className="text-[12px] text-(--c-text-3)">Permanently delete everything. Cannot be undone.</div>
                   </div>
                   <Button variant="danger" onClick={() => setShowClear(true)}>
-                    <Trash2 size={14} /> Clear All
+                    <IconTrash size={14} /> Clear All
                   </Button>
                 </div>
               </Card>

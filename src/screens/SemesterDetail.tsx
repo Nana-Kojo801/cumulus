@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, MoreVertical, Trash2, Upload } from 'lucide-react';
+import { IconPlus, IconTrash } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
@@ -68,14 +68,9 @@ export function SemesterDetail() {
         breadcrumbs={[{ label: 'Semesters', to: '/semesters' }, { label: semester.name }]}
         onMenuOpen={onMenuOpen}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/import?semester=${id}`)}>
-              <Upload size={14} /> Import Template
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
-              <Plus size={14} /> Add Course
-            </Button>
-          </div>
+          <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
+            <IconPlus size={14} /> Add Course
+          </Button>
         }
       />
 
@@ -106,7 +101,7 @@ export function SemesterDetail() {
           <Card className="p-10 text-center">
             <p className="text-(--c-text-3) text-[14px] mb-3">No courses yet.</p>
             <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
-              <Plus size={14} /> Add Course
+              <IconPlus size={14} /> Add Course
             </Button>
           </Card>
         ) : (
@@ -137,7 +132,7 @@ export function SemesterDetail() {
                           className="opacity-0 group-hover:opacity-100 p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-all cursor-pointer"
                           onClick={e => { e.stopPropagation(); setDeleteId(course.id); }}
                         >
-                          <Trash2 size={13} />
+                          <IconTrash size={13} />
                         </button>
                       </div>
                     </div>
