@@ -1,8 +1,4 @@
 import { useEffect, type ReactNode } from 'react';
-<<<<<<< HEAD
-import { IconX } from '@/components/icons';
-=======
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { IconX } from '@/components/icons';

@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import { IconPlus, IconTrash, IconChevronRight, IconEdit } from '@/components/icons';
-=======
-import { IconPlus, IconChevronRight, IconTrash } from '@/components/icons';
-import { v4 as uuidv4 } from 'uuid';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -28,27 +23,6 @@ import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
 import type { Semester } from '@/db/schema';
 
-function Stepper({ value, onChange, min = 1, max = 99 }: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
-  return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer text-lg leading-none"
-      >
-        −
-      </button>
-      <span className="text-[22px] font-semibold tabular-nums text-(--c-text) w-8 text-center">{value}</span>
-      <button
-        type="button"
-        onClick={() => onChange(Math.min(max, value + 1))}
-        className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer text-lg leading-none"
-      >
-        +
-      </button>
-    </div>
-  );
-}
 
 interface SemesterSheetProps {
   open: boolean;
@@ -63,36 +37,28 @@ function SemesterSheet({ open, onClose, existing }: SemesterSheetProps) {
   const updateSemester = useMutation(api.semesters.update);
   const isNew = !existing;
 
-  const [year, setYear] = useState(1);
-  const [term, setTerm] = useState(1);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'complete' | 'active'>('active');
 
   useEffect(() => {
     if (open) {
       if (existing) {
-        setYear(existing.year);
-        setTerm(existing.term);
-        setName(existing.name === `Year ${existing.year} · Semester ${existing.term}` ? '' : existing.name);
+        setName(existing.name);
         setStatus(existing.status);
       } else {
-        setYear(1);
-        setTerm(1);
         setName('');
         setStatus('active');
       }
     }
   }, [open, existing]);
 
-  const autoName = `Year ${year} · Semester ${term}`;
-  const displayName = name.trim() || autoName;
-
   async function handleSave() {
+    if (!name.trim()) return;
     if (isNew) {
-      await createSemester({ name: displayName, year, term, status, createdAt: Date.now() });
+      await createSemester({ name: name.trim(), status, createdAt: Date.now() });
       toast('Semester created');
     } else {
-      await updateSemester({ id: existing!.id, name: displayName, year, term, status });
+      await updateSemester({ id: existing!.id, name: name.trim(), status });
       toast('Semester updated');
     }
     onClose();
@@ -103,21 +69,9 @@ function SemesterSheet({ open, onClose, existing }: SemesterSheetProps) {
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-1 min-h-0 overflow-y-auto p-5 flex flex-col gap-5">
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label>Year</Label>
-              <Stepper value={year} onChange={setYear} min={1} max={8} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Semester</Label>
-              <Stepper value={term} onChange={setTerm} min={1} max={4} />
-            </div>
-          </div>
-
           <div className="flex flex-col gap-1.5">
-            <Label>Custom Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder={autoName} />
-            <p className="text-[12px] text-(--c-text-4)">Leave blank to use auto-generated name</p>
+            <Label>Name</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Year 1 · Semester 1" autoFocus={open} />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -149,12 +103,29 @@ function SemesterSheet({ open, onClose, existing }: SemesterSheetProps) {
         </div>
         <div className="shrink-0 border-t border-(--c-line) flex justify-end gap-2 px-5 py-4">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>
+          <Button variant="primary" onClick={handleSave} disabled={!name.trim()}>
             {isNew ? 'Create Semester' : 'Save Changes'}
           </Button>
         </div>
       </div>
     </Sheet>
+  );
+}
+
+function SemestersSkeleton({ onMenuOpen }: { onMenuOpen: () => void }) {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <Topbar title="Semesters" onMenuOpen={onMenuOpen} actions={<div className="skeleton w-28 h-8 rounded-full" />} />
+      <div className="flex-1 overflow-y-auto p-5 lg:p-7 flex flex-col gap-6">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="skeleton rounded-[16px]" style={{ height: 80 }} />
+          <div className="skeleton rounded-[16px]" style={{ height: 80 }} />
+        </div>
+        <div className="flex flex-col gap-2">
+          {[0, 1, 2].map(i => <div key={i} className="skeleton rounded-[14px]" style={{ height: 64 }} />)}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -170,19 +141,21 @@ export function Semesters() {
   const [addCourseSemId, setAddCourseSemId] = useState<string | null>(null);
 
   const removeSemester = useMutation(api.semesters.remove);
-  const semesters = useSemesters() ?? [];
-
-  useEffect(() => {
-    if (autoOpened || semesters.length === 0) return;
-    const active = semesters.find(s => s.status === 'active');
-    if (active) setOpenIds(new Set([active.id]));
-    setAutoOpened(true);
-  }, [semesters, autoOpened]);
-
+  const rawSemesters = useSemesters();
   const courses = useCourses() ?? [];
   const criteria = useCriteria() ?? [];
   const entries = useScoreEntries() ?? [];
 
+  useEffect(() => {
+    if (!rawSemesters || autoOpened || rawSemesters.length === 0) return;
+    const active = rawSemesters.find(s => s.status === 'active');
+    if (active) setOpenIds(new Set([active.id]));
+    setAutoOpened(true);
+  }, [rawSemesters, autoOpened]);
+
+  if (rawSemesters === undefined) return <SemestersSkeleton onMenuOpen={onMenuOpen} />;
+
+  const semesters = rawSemesters;
   const cumulative = cumulativeGPA(semesters, courses, criteria, entries);
 
   async function handleDelete(semId: string) {
@@ -199,10 +172,7 @@ export function Semesters() {
     });
   }
 
-  const sorted = [...semesters].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.term - b.term;
-  });
+  const sorted = [...semesters].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -211,11 +181,7 @@ export function Semesters() {
         onMenuOpen={onMenuOpen}
         actions={
           <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
-<<<<<<< HEAD
-            <IconPlus size={14} /> New
-=======
             <IconPlus size={14} /> New Semester
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
           </Button>
         }
       />
@@ -281,28 +247,10 @@ export function Semesters() {
                     style={isActive ? { borderLeft: '3px solid var(--c-accent)', paddingLeft: 17 } : {}}
                     onClick={() => toggleOpen(sem.id)}
                   >
-                    {/* Name + meta */}
+                    {/* Name */}
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}>
                         {sem.name}
-                      </div>
-<<<<<<< HEAD
-                      <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
-                        {semCourses.length} courses · {credits} credits
-                        {isActive && <span style={{ color: 'var(--c-accent)', marginLeft: 6, fontWeight: 600 }}>· Active</span>}
-=======
-                      <div className="flex items-center gap-3">
-                        <div className="text-[22px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
-                          {fmtGPA(gpa)}
-                        </div>
-                        <button
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-(--radius-r1) text-(--c-text-4) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
-                          onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
-                        >
-                          <IconTrash size={14} />
-                        </button>
-                        <IconChevronRight size={14} className="text-(--c-text-4)" />
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                       </div>
                     </div>
 
@@ -311,57 +259,6 @@ export function Semesters() {
                       {fmtGPA(gpa)}
                     </div>
 
-                    {/* Edit */}
-                    <button
-                      className="p-2 rounded-[10px] transition-all cursor-pointer"
-                      style={{ color: 'var(--c-text-3)' }}
-                      onClick={e => { e.stopPropagation(); setEditingSem(sem); }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'var(--c-surface-3)';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'transparent';
-                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text-3)';
-                      }}
-                      title="Edit semester"
-                    >
-                      <IconEdit size={14} />
-                    </button>
-
-                    {/* Add course */}
-                    <button
-                      className="p-2 rounded-[10px] transition-all cursor-pointer"
-                      style={{ color: 'var(--c-accent)' }}
-                      onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'var(--c-accent-bg)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.background = 'transparent';
-                      }}
-                      title="Add course"
-                    >
-                      <IconPlus size={14} />
-                    </button>
-
-                    {/* Delete */}
-                    <button
-                      className="p-2 rounded-[10px] transition-all cursor-pointer"
-                      style={{ color: 'var(--c-text-4)' }}
-                      onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.color = 'var(--c-grade-e)';
-                        (e.currentTarget as HTMLElement).style.background = 'var(--c-danger-bg)';
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text-4)';
-                        (e.currentTarget as HTMLElement).style.background = 'transparent';
-                      }}
-                    >
-                      <IconTrash size={14} />
-                    </button>
-
                     {/* Chevron */}
                     <IconChevronRight size={16} className="chev" />
                   </div>
@@ -369,6 +266,67 @@ export function Semesters() {
                   {/* Accordion panel */}
                   <div className={`c-acc-panel ${isOpen ? 'open' : ''}`}>
                     <div className="inner">
+                      {/* Info + actions bar */}
+                      <div
+                        className="flex items-center gap-2 px-5 py-3"
+                        style={{ borderBottom: '1px solid var(--c-line)', background: 'var(--c-surface-2)' }}
+                      >
+                        <div className="flex-1 flex items-center gap-2 flex-wrap" style={{ fontSize: 13, color: 'var(--c-text-3)' }}>
+                          <span>{semCourses.length} courses</span>
+                          <span>·</span>
+                          <span>{credits} credits</span>
+                          {isActive && <span style={{ color: 'var(--c-accent)', fontWeight: 600 }}>· Active</span>}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            className="p-2 rounded-[10px] transition-all cursor-pointer"
+                            style={{ color: 'var(--c-text-3)' }}
+                            onClick={e => { e.stopPropagation(); setEditingSem(sem); }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'var(--c-surface-3)';
+                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text)';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'transparent';
+                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text-3)';
+                            }}
+                            title="Edit semester"
+                          >
+                            <IconEdit size={14} />
+                          </button>
+                          <button
+                            className="p-2 rounded-[10px] transition-all cursor-pointer"
+                            style={{ color: 'var(--c-accent)' }}
+                            onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'var(--c-accent-bg)';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'transparent';
+                            }}
+                            title="Add course"
+                          >
+                            <IconPlus size={14} />
+                          </button>
+                          <button
+                            className="p-2 rounded-[10px] transition-all cursor-pointer"
+                            style={{ color: 'var(--c-text-4)' }}
+                            onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLElement).style.color = 'var(--c-grade-e)';
+                              (e.currentTarget as HTMLElement).style.background = 'var(--c-danger-bg)';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text-4)';
+                              (e.currentTarget as HTMLElement).style.background = 'transparent';
+                            }}
+                            title="Delete semester"
+                          >
+                            <IconTrash size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Courses list */}
                       <div className="c-acc-courses">
                         {semCourses.length === 0 ? (
                           <div style={{ padding: '14px 20px', color: 'var(--c-text-4)', fontSize: 13 }}>

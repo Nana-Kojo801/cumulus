@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IconMinus, IconPlus } from '@/components/icons';
-<<<<<<< HEAD
-=======
-import { v4 as uuidv4 } from 'uuid';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
@@ -74,10 +70,7 @@ export function CourseEdit() {
     }
   }
 
-  const sorted = [...semesters].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.term - b.term;
-  });
+  const sorted = [...semesters].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

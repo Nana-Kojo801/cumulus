@@ -28,7 +28,7 @@ export function Simulator() {
   const [overrides, setOverrides] = useState<Record<string, string>>({});
 
   const sortedSemesters = useMemo(() =>
-    [...semesters].sort((a, b) => a.year !== b.year ? a.year - b.year : a.term - b.term),
+    [...semesters].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)),
     [semesters]
   );
 

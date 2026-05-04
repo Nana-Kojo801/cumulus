@@ -1,8 +1,8 @@
 export interface Semester {
   id: string;
   name: string;
-  year: number;
-  term: number;
+  year?: number;
+  term?: number;
   status: 'complete' | 'active';
   createdAt: number;
 }
@@ -12,6 +12,7 @@ export interface Course {
   semesterId: string;
   code: string;
   name: string;
+  shortName?: string;
   credits: number;
   canvasId?: number;
   createdAt: number;

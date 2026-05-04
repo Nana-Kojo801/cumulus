@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Course } from '@/db/schema';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,4 +22,9 @@ export function fmtPct(n: number | null, decimals = 1): string {
 
 export function cleanCourseName(name: string): string {
   return name.replace(/^\[[^\]]*\]\s*-?\s*/, '').trim();
+}
+
+export function displayCourseName(course: Course, useShort: boolean): string {
+  if (useShort && course.shortName) return course.shortName;
+  return cleanCourseName(course.name);
 }

@@ -1,9 +1,5 @@
 import { useState, useCallback, createContext, useContext, type ReactNode } from 'react';
-<<<<<<< HEAD
-import { IconX, IconCheckCircle, IconAlertCircle, IconInfo } from '@/components/icons';
-=======
 import { IconX, IconCheck, IconWarning, IconInfo } from '@/components/icons';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -65,11 +61,7 @@ interface ToastProps extends ToastItem {
 }
 
 export function Toast({ message, type, onDismiss }: ToastProps) {
-<<<<<<< HEAD
-  const Icon = type === 'success' ? IconCheckCircle : type === 'error' ? IconAlertCircle : IconInfo;
-=======
   const Icon = type === 'success' ? IconCheck : type === 'error' ? IconWarning : IconInfo;
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
   return (
     <div className={cn(
       'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-(--radius-r3) border shadow-lg min-w-65 max-w-95',

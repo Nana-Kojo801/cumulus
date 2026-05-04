@@ -3,36 +3,23 @@ import { IconChevronRight, IconPlus } from '@/components/icons';
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
-import { GradePill } from '@/components/ui/GradePill';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { useSemesters, useActiveSemester } from '@/hooks/useSemesters';
 import { useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import {
-  cumulativeGPA, semesterGPA, courseRunningGrade, gpaHistory, letterFor,
+  cumulativeGPA, semesterGPA, gpaHistory, honorFor,
 } from '@/lib/calculations';
-<<<<<<< HEAD
-import { fmtGPA, fmtPct, cleanCourseName } from '@/lib/utils';
-=======
-import { fmtGPA, fmtPct } from '@/lib/utils';
-
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.22, ease: 'easeOut' as const, delay },
-});
+import { fmtGPA, cleanCourseName } from '@/lib/utils';
 
 const rowItem = {
   hidden: { opacity: 0, x: -6 },
   show: (i: number) => ({
-    opacity: 1,
-    x: 0,
+    opacity: 1, x: 0,
     transition: { duration: 0.18, ease: 'easeOut' as const, delay: i * 0.05 },
   }),
 };
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 
 function GPARing({ gpa }: { gpa: number | null }) {
   const value = gpa ?? 0;
@@ -111,22 +98,38 @@ function contextMessage(gpa: number | null): string {
   return 'Room to grow. Focus on your weakest subjects first.';
 }
 
-const rowItem = {
-  hidden: { opacity: 0, x: -6 },
-  show: (i: number) => ({
-    opacity: 1, x: 0,
-    transition: { duration: 0.18, ease: 'easeOut', delay: i * 0.05 },
-  }),
-};
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <Topbar title="Dashboard" />
+      <div className="flex-1 overflow-y-auto p-5 lg:p-7 flex flex-col gap-6">
+        <div className="skeleton rounded-[20px]" style={{ height: 160 }} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[0, 1, 2].map(i => <div key={i} className="skeleton rounded-[16px]" style={{ height: 80 }} />)}
+        </div>
+        <div className="flex flex-col gap-2">
+          {[0, 1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 48 }} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Dashboard() {
   const onMenuOpen = useMenuOpen();
   const navigate = useNavigate();
-  const semesters = useSemesters() ?? [];
+  const rawSemesters = useSemesters();
   const activeSemester = useActiveSemester();
-  const allCourses = useCourses() ?? [];
-  const criteria = useCriteria() ?? [];
-  const entries = useScoreEntries() ?? [];
+  const rawCourses = useCourses();
+  const rawCriteria = useCriteria();
+  const rawEntries = useScoreEntries();
+
+  if (rawSemesters === undefined || rawCourses === undefined) return <DashboardSkeleton />;
+
+  const semesters = rawSemesters;
+  const allCourses = rawCourses;
+  const criteria = rawCriteria ?? [];
+  const entries = rawEntries ?? [];
 
   const activeCourses = allCourses.filter(c => c.semesterId === activeSemester?.id);
   const pastSemesters = semesters.filter(s => s.status === 'complete');
@@ -141,6 +144,7 @@ export function Dashboard() {
     (acc, s) => acc + allCourses.filter(c => c.semesterId === s.id).reduce((a, c) => a + c.credits, 0), 0
   );
   const history = gpaHistory(semesters, allCourses, criteria, entries);
+  const honor = honorFor(cumulative.gpa);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -163,6 +167,11 @@ export function Dashboard() {
                 <div style={{ fontFamily: 'var(--f-display)', fontSize: 64, fontWeight: 500, letterSpacing: '-0.04em', lineHeight: 1, color: 'white' }}>
                   {fmtGPA(cumulative.gpa)}
                 </div>
+                {honor && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '3px 10px' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
+                  </div>
+                )}
               </div>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
                 {contextMessage(cumulative.gpa)}
@@ -173,7 +182,7 @@ export function Dashboard() {
                   <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, fontWeight: 500, letterSpacing: '-0.03em', color: 'white' }}>{fmtGPA(semGPA.gpa)}</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 14px' }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 2 }}>Credits Done</div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 2 }}>Earned Credits</div>
                   <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, fontWeight: 500, letterSpacing: '-0.03em', color: 'white' }}>{completedCredits}</div>
                 </div>
               </div>
@@ -182,8 +191,15 @@ export function Dashboard() {
             <div className="hidden sm:flex relative z-10 items-center gap-6">
               <GPARing gpa={cumulative.gpa} />
               <div className="flex-1 min-w-0">
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: 'rgba(255,255,255,0.65)', marginBottom: 6 }}>
-                  Cumulative GPA
+                <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>
+                    Cumulative GPA
+                  </div>
+                  {honor && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '2px 10px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
+                    </div>
+                  )}
                 </div>
                 <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 16, lineHeight: 1.5 }}>
                   {contextMessage(cumulative.gpa)}
@@ -194,7 +210,7 @@ export function Dashboard() {
                     <div style={{ fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 500, letterSpacing: '-0.03em', color: 'white' }}>{fmtGPA(semGPA.gpa)}</div>
                   </div>
                   <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 16px' }}>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 2 }}>Credits Done</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 2 }}>Earned Credits</div>
                     <div style={{ fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 500, letterSpacing: '-0.03em', color: 'white' }}>{completedCredits}</div>
                   </div>
                   {history.length >= 2 && (
@@ -250,12 +266,7 @@ export function Dashboard() {
                 <span className="sub">{activeSemester.name}</span>
               )}
             </div>
-            {activeSemester && (
-              <Button variant="ghost" size="sm" onClick={() => navigate(`/semesters/${activeSemester.id}`)}>
-                View semester
-              </Button>
-            )}
-          </div>
+            </div>
 
           {activeCourses.length === 0 ? (
             <div
@@ -276,54 +287,24 @@ export function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="c-card overflow-hidden">
-              {activeCourses.map((course, i) => {
-                const courseCriteria = criteria.filter(cr => cr.courseId === course.id);
-                const courseEntries = entries.filter(e => courseCriteria.some(cr => cr.id === e.criterionId));
-                const { pct, weightCompleted } = courseRunningGrade(course, courseCriteria, courseEntries);
-                const letter = pct !== null ? letterFor(pct) : '—';
-                return (
-                  <motion.button
-                    key={course.id}
-                    custom={i}
-                    variants={rowItem}
-                    initial="hidden"
-                    animate="show"
-                    className="w-full flex items-center gap-3 px-5 py-4 hover:bg-(--c-surface-2) transition-colors text-left cursor-pointer"
-                    style={{ borderTop: i > 0 ? '1px solid var(--c-line)' : 'none' }}
-                    onClick={() => navigate(`/courses/${course.id}`)}
-                  >
-                    <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>
-                      {cleanCourseName(course.name)}
-                    </span>
-                    <span
-                      className="hidden sm:block shrink-0"
-                      style={{ fontSize: 12, color: 'var(--c-text-4)', fontFamily: 'var(--f-mono)', marginRight: 4 }}
-                    >
-                      {course.credits} cr
-                    </span>
-                    <div className="w-20 hidden md:block">
-                      <ProgressBar value={weightCompleted} />
-                    </div>
-                    <span
-                      className="shrink-0"
-                      style={{ fontSize: 13, fontFamily: 'var(--f-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--c-text-3)', minWidth: 48, textAlign: 'right' }}
-                    >
-                      {fmtPct(pct, 1)}
-                    </span>
-                    {pct !== null && letter !== '—' ? (
-                      <GradePill letter={letter} size="sm" />
-                    ) : (
-                      <span className="w-8 shrink-0" />
-                    )}
-<<<<<<< HEAD
-                    <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
-=======
-                    <IconChevronRight size={14} className="text-(--c-text-4)" />
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
-                  </motion.button>
-                );
-              })}
+            <div className="flex flex-col">
+              {activeCourses.map((course, i) => (
+                <motion.button
+                  key={course.id}
+                  custom={i}
+                  variants={rowItem}
+                  initial="hidden"
+                  animate="show"
+                  className="w-full flex items-center gap-3 px-2 py-3 hover:bg-(--c-surface-2) transition-colors text-left cursor-pointer"
+                  style={{ borderBottom: i < activeCourses.length - 1 ? '1px solid var(--c-line)' : 'none' }}
+                  onClick={() => navigate(`/courses/${course.id}`)}
+                >
+                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>
+                    {cleanCourseName(course.name)}
+                  </span>
+                  <IconChevronRight size={14} className="text-(--c-text-4)" />
+                </motion.button>
+              ))}
             </div>
           )}
         </motion.section>
@@ -361,15 +342,10 @@ export function Dashboard() {
                       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>{sem.name}</div>
                       <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 1 }}>{credits} credits</div>
                     </div>
-<<<<<<< HEAD
-                    <div className="c-bignum" style={{ fontSize: 24 }}>{fmtGPA(gpa)}</div>
-                    <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
-=======
                     <div className="text-[18px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
                       {fmtGPA(gpa)}
                     </div>
                     <IconChevronRight size={14} className="text-(--c-text-4)" />
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                   </motion.button>
                 );
               })}

@@ -1,9 +1,5 @@
 import { useState, useRef } from 'react';
-<<<<<<< HEAD
-import { useParams,useNavigate } from 'react-router-dom';
-=======
 import { useParams, useNavigate } from 'react-router-dom';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { IconPlus, IconEdit, IconTrash, IconTarget } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -14,12 +10,9 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Chip } from '@/components/ui/Chip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CriterionModal } from '@/components/modals/CriterionModal';
+import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
 import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
-<<<<<<< HEAD
-import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
-=======
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { useCourse } from '@/hooks/useCourses';
 import { useSemester } from '@/hooks/useSemesters';
 import { useCriteriaByCourse } from '@/hooks/useCriteria';
@@ -55,12 +48,12 @@ export function CourseDetail() {
   const allEntries = useScoreEntries() ?? [];
   const entries = allEntries.filter(e => criteria.some(cr => cr.id === e.criterionId));
 
+  const [showEditSheet, setShowEditSheet] = useState(false);
   const [showCriterionModal, setShowCriterionModal] = useState(false);
   const [editingCriterion, setEditingCriterion] = useState<Criterion | undefined>();
   const [scoringCriterionId, setScoringCriterionId] = useState<string | null>(null);
   const [showWhatScore, setShowWhatScore] = useState(false);
   const [deleteCritId, setDeleteCritId] = useState<string | null>(null);
-  const [showEditCourse, setShowEditCourse] = useState(false);
 
   const scoringCriterion = criteria.find(c => c.id === scoringCriterionId);
   const scoringCriterionRef = useRef<Criterion | undefined>(undefined);
@@ -69,8 +62,15 @@ export function CourseDetail() {
   if (!course) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <Topbar title="Loading…" back="Semesters" onMenuOpen={onMenuOpen} />
-        <div className="flex-1 flex items-center justify-center text-(--c-text-3)">Loading…</div>
+        <Topbar title="" back="Semesters" onMenuOpen={onMenuOpen} />
+        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+          <div className="skeleton" style={{ height: 28, width: '60%', borderRadius: 8 }} />
+          <div className="skeleton" style={{ height: 72, width: '40%', borderRadius: 8 }} />
+          <div className="skeleton rounded-[16px]" style={{ height: 120 }} />
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2].map(i => <div key={i} className="skeleton rounded-[12px]" style={{ height: 64 }} />)}
+          </div>
+        </div>
       </div>
     );
   }
@@ -109,11 +109,7 @@ export function CourseDetail() {
         back={semester?.name ?? 'Semesters'}
         onMenuOpen={onMenuOpen}
         actions={
-<<<<<<< HEAD
-          <Button variant="ghost" size="sm" onClick={() => setShowEditCourse(true)}>
-=======
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
+          <Button variant="ghost" size="sm" onClick={() => setShowEditSheet(true)}>
             <IconEdit size={14} /> Edit
           </Button>
         }
@@ -161,15 +157,11 @@ export function CourseDetail() {
                 </div>
               </div>
             </div>
-<<<<<<< HEAD
-            <Button variant="default" onClick={() => setShowWhatScore(true)} className="self-start">
-=======
             <Button
               variant="default"
               onClick={() => setShowWhatScore(true)}
               className="self-start"
             >
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
               <IconTarget size={14} /> What score do I need?
             </Button>
           </Card>
@@ -287,8 +279,8 @@ export function CourseDetail() {
       </div>
 
       <CourseEditSheet
-        open={showEditCourse}
-        onClose={() => setShowEditCourse(false)}
+        open={showEditSheet}
+        onClose={() => setShowEditSheet(false)}
         courseId={id}
       />
 

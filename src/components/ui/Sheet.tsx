@@ -1,9 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-<<<<<<< HEAD
 import { createPortal } from 'react-dom';
-import { IconX } from '@/components/icons';
-=======
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { IconX } from '@/components/icons';
@@ -39,11 +35,7 @@ export function Sheet({ open, onClose, title, children, className, fullHeight }:
           />
           <motion.div
             className={cn(
-<<<<<<< HEAD
-              'relative w-full sm:w-[500px] h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-2xl flex flex-col overflow-hidden',
-=======
-              'relative w-full sm:w-125 h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-sheet flex flex-col',
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
+              'relative w-full sm:w-125 h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-2xl flex flex-col overflow-hidden',
               className
             )}
             initial={{ x: '100%' }}

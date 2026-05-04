@@ -45,8 +45,8 @@ export const clearAndImport = mutation({
     semesters: v.array(v.object({
       id: v.string(),
       name: v.string(),
-      year: v.number(),
-      term: v.number(),
+      year: v.optional(v.number()),
+      term: v.optional(v.number()),
       status: v.union(v.literal('active'), v.literal('complete')),
       createdAt: v.number(),
     })),
@@ -55,6 +55,7 @@ export const clearAndImport = mutation({
       semesterId: v.string(),
       code: v.string(),
       name: v.string(),
+      shortName: v.optional(v.string()),
       credits: v.number(),
       canvasId: v.optional(v.number()),
       createdAt: v.number(),
@@ -95,10 +96,10 @@ export const clearAndImport = mutation({
     for (const sem of args.semesters) {
       const newId = await ctx.db.insert('semesters', {
         name: sem.name,
-        year: sem.year,
-        term: sem.term,
         status: sem.status,
         createdAt: sem.createdAt,
+        ...(sem.year !== undefined ? { year: sem.year } : {}),
+        ...(sem.term !== undefined ? { term: sem.term } : {}),
       });
       semIdMap.set(sem.id, newId);
     }
@@ -111,6 +112,7 @@ export const clearAndImport = mutation({
         semesterId,
         code: course.code,
         name: course.name,
+        shortName: course.shortName,
         credits: course.credits,
         canvasId: course.canvasId,
         createdAt: course.createdAt,

@@ -4,8 +4,8 @@ import { v } from 'convex/values';
 export default defineSchema({
   semesters: defineTable({
     name: v.string(),
-    year: v.number(),
-    term: v.number(),
+    year: v.optional(v.number()),
+    term: v.optional(v.number()),
     status: v.union(v.literal('complete'), v.literal('active')),
     createdAt: v.number(),
   })
@@ -17,6 +17,7 @@ export default defineSchema({
     semesterId: v.id('semesters'),
     code: v.string(),
     name: v.string(),
+    shortName: v.optional(v.string()),
     credits: v.number(),
     canvasId: v.optional(v.number()),
     createdAt: v.number(),

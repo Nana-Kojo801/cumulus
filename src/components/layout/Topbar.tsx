@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom';
-import { IconChevronLeft } from '@/components/icons';
-=======
-import { Link } from 'react-router-dom';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import type { ReactNode } from 'react';
-import { IconChevronRight } from '@/components/icons';
+import { IconChevronLeft } from '@/components/icons';
 
 interface TopbarProps {
   title: string;
@@ -14,7 +9,6 @@ interface TopbarProps {
   onMenuOpen?: () => void;
 }
 
-<<<<<<< HEAD
 export function Topbar({ title, back, actions }: TopbarProps) {
   const navigate = useNavigate();
   return (
@@ -22,9 +16,9 @@ export function Topbar({ title, back, actions }: TopbarProps) {
       className="flex items-center justify-between px-6 border-b border-(--c-line) shrink-0 gap-2"
       style={{
         minHeight: 56,
-        background: 'var(--c-topbar-bg, rgba(255,255,255,0.6))',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'var(--c-topbar-bg)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }}
     >
       <div className="flex items-center gap-1 min-w-0 flex-1">
@@ -49,26 +43,6 @@ export function Topbar({ title, back, actions }: TopbarProps) {
               style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}
             >
               {title}
-=======
-export function Topbar({ breadcrumbs, actions }: TopbarProps) {
-  return (
-    <header className="h-12 flex items-center justify-between px-5 border-b border-(--c-line) bg-(--c-bg-2) shrink-0 gap-3">
-      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        <nav className="flex items-center gap-1 min-w-0 overflow-hidden">
-          {breadcrumbs.map((crumb, i) => (
-            <span key={i} className="flex items-center gap-1 min-w-0 shrink-0 last:min-w-0 last:shrink">
-              {i > 0 && <IconChevronRight size={11} className="text-(--c-text-4) shrink-0" />}
-              {crumb.to ? (
-                <Link
-                  to={crumb.to}
-                  className="text-[13px] text-(--c-text-3) hover:text-(--c-text) transition-colors truncate hidden sm:block"
-                >
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="text-[13px] font-semibold text-(--c-text) truncate">{crumb.label}</span>
-              )}
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             </span>
           </>
         ) : (

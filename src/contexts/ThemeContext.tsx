@@ -18,7 +18,7 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() =>
-    (localStorage.getItem('cumulus-theme') as Theme) ?? 'light'
+    (localStorage.getItem('cumulus-theme') as Theme) ?? 'dark'
   );
 
   function setTheme(t: Theme) {

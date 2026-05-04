@@ -1,8 +1,4 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
-<<<<<<< HEAD
-import { IconChevronDown, IconChevronUp, IconCheck } from '@/components/icons';
-=======
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { IconChevronDown, IconChevronUp, IconCheck } from '@/components/icons';
@@ -23,7 +19,7 @@ export const SelectTrigger = forwardRef<
       'bg-(--c-surface-2) text-(--c-text) text-[15px]',
       'outline-none transition-all cursor-pointer',
       'focus:border-(--c-accent) focus:ring-2 focus:ring-(--c-accent)/20',
-      'data-[placeholder]:text-(--c-text-4)',
+      'data-placeholder:text-(--c-text-4)',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       className
     )}
@@ -31,11 +27,7 @@ export const SelectTrigger = forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-<<<<<<< HEAD
-      <IconChevronDown size={16} className="text-(--c-text-3) shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-=======
       <IconChevronDown size={15} className="text-(--c-text-3) shrink-0" />
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -53,8 +45,8 @@ export const SelectContent = forwardRef<
         'overflow-hidden rounded-(--radius-r3)',
         'bg-(--c-surface) border border-(--c-line-2)',
         'shadow-elevated',
-        'data-[state=open]:[animation:selectOpen_0.15s_ease-out]',
-        'data-[state=closed]:[animation:selectClose_0.1s_ease-in]',
+        'data-[state=open]:animate-[selectOpen_0.15s_ease-out]',
+        'data-[state=closed]:animate-[selectClose_0.1s_ease-in]',
         className
       )}
       position={position}
@@ -98,7 +90,7 @@ export const SelectItem = forwardRef<
       'rounded-(--radius-r2) py-2.5 pl-8 pr-3',
       'text-[14px] text-(--c-text) outline-none',
       'hover:bg-(--c-surface-2) focus:bg-(--c-surface-2)',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'data-disabled:pointer-events-none data-disabled:opacity-50',
       'transition-colors duration-100',
       className
     )}

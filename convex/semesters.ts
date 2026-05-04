@@ -29,8 +29,8 @@ export const getActive = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    year: v.number(),
-    term: v.number(),
+    year: v.optional(v.number()),
+    term: v.optional(v.number()),
     status: v.union(v.literal('active'), v.literal('complete')),
     createdAt: v.number(),
   },
@@ -42,7 +42,13 @@ export const create = mutation({
         .first();
       if (active) await ctx.db.patch(active._id, { status: 'complete' });
     }
-    return ctx.db.insert('semesters', args);
+    return ctx.db.insert('semesters', {
+      name: args.name,
+      status: args.status,
+      createdAt: args.createdAt,
+      ...(args.year !== undefined ? { year: args.year } : {}),
+      ...(args.term !== undefined ? { term: args.term } : {}),
+    });
   },
 });
 
@@ -50,8 +56,8 @@ export const update = mutation({
   args: {
     id: v.string(),
     name: v.string(),
-    year: v.number(),
-    term: v.number(),
+    year: v.optional(v.number()),
+    term: v.optional(v.number()),
     status: v.union(v.literal('active'), v.literal('complete')),
   },
   handler: async (ctx, args) => {
@@ -65,7 +71,12 @@ export const update = mutation({
         await ctx.db.patch(current._id, { status: 'complete' });
       }
     }
-    await ctx.db.patch(id, { name: args.name, year: args.year, term: args.term, status: args.status });
+    await ctx.db.patch(id, {
+      name: args.name,
+      status: args.status,
+      ...(args.year !== undefined ? { year: args.year } : {}),
+      ...(args.term !== undefined ? { term: args.term } : {}),
+    });
   },
 });
 

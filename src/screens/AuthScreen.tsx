@@ -46,78 +46,58 @@ export function AuthScreen() {
 
         {/* Auth card */}
         <div
-          className="w-full overflow-hidden"
+          className="w-full"
           style={{
             background: 'var(--c-surface)',
             borderRadius: 'var(--r-4)',
             border: '1px solid var(--c-line-2)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
+            overflow: 'hidden',
           }}
         >
-          <div className="px-6 pt-6 pb-2 text-center">
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.015em', color: 'var(--c-text)' }}>
+          <div className="px-6 pt-6 pb-4 text-center border-b border-(--c-line)">
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.015em', color: 'var(--c-text)' }}>
               Sign in to continue
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--c-text-3)', marginTop: 4 }}>
-              Your grades sync securely across all your devices.
             </div>
           </div>
 
-          <div className="px-6 pb-6 pt-4">
+          <div className="p-5 w-full">
             <SignIn
               appearance={{
                 variables: {
-                  colorText: 'var(--c-text)',
-                  colorTextSecondary: 'var(--c-text-3)',
-                  colorNeutral: 'var(--c-text)',
-                  colorPrimary: 'var(--c-accent)',
-                  borderRadius: '14px',
+                  colorPrimary: '#c9445d',
+                  borderRadius: '12px',
                   fontFamily: 'var(--f-ui)',
                   fontSize: '14px',
                 },
                 elements: {
-                  rootBox: 'w-full',
-                  cardBox: '!shadow-none !border-0 w-full !bg-transparent',
-                  card: '!bg-transparent !shadow-none !border-0 !p-0 !m-0 w-full',
-                  header: '!hidden !h-0 !overflow-hidden',
+                  rootBox: '!w-full !max-w-none !block',
+                  cardBox: '!shadow-none !border-0 !w-full !max-w-none !bg-transparent !p-0',
+                  card: '!bg-transparent !shadow-none !border-0 !p-0 !m-0 !w-full !max-w-none',
+                  header: '!hidden',
                   headerTitle: '!hidden',
                   headerSubtitle: '!hidden',
                   headerBackRow: '!hidden',
-                  main: '!p-0 !m-0',
-                  socialButtonsRoot: 'w-full',
-                  socialButtonsBlockButtons: 'w-full !flex !flex-col !gap-2',
-                  socialButtonsBlockButton: [
-                    '!w-full !flex !items-center !justify-center !gap-3',
-                    '!h-12 !rounded-[14px]',
-                    '!bg-[var(--c-surface-2)] hover:!bg-[var(--c-surface-3)]',
-                    '!border !border-[var(--c-line-2)]',
-                    '!text-[var(--c-text)] !text-[14px] !font-semibold',
-                    '!shadow-none !transition-colors !cursor-pointer !no-underline',
-                    '!m-0',
-                  ].join(' '),
-                  socialButtonsBlockButtonText: '!text-[var(--c-text)] !text-[14px] !font-semibold',
+                  main: '!p-0 !m-0 !w-full',
+                  socialButtonsRoot: '!w-full !max-w-none !pt-3',
+                  socialButtonsBlockButtons: '!w-full !max-w-none !flex !flex-col !gap-2 !p-0',
+                  socialButtonsBlockButton: '!w-full !max-w-none !h-12 !rounded-xl !bg-transparent !border !border-[var(--c-line-2)] !text-[var(--c-text)] !text-[14px] !font-semibold !shadow-none !m-0 !no-underline',
+                  socialButtonsBlockButtonText: '!text-[var(--c-text)] !font-semibold',
                   socialButtonsBlockButtonArrow: '!hidden',
                   socialButtonsProviderIcon: '!w-5 !h-5',
-                  dividerRow: '!hidden !h-0 !overflow-hidden',
+                  dividerRow: '!hidden',
                   dividerLine: '!hidden',
                   dividerText: '!hidden',
-                  form: '!hidden !h-0 !overflow-hidden !p-0 !m-0',
+                  form: '!hidden',
                   formButtonPrimary: '!hidden',
                   formFieldRow: '!hidden',
-                  formFieldLabel: '!hidden',
-                  formFieldInput: '!hidden',
-                  footer: '!hidden !h-0 !overflow-hidden !p-0 !m-0',
+                  footer: '!hidden',
                   footerAction: '!hidden',
-                  footerActionText: '!hidden',
-                  footerActionLink: '!hidden',
-                  footerPages: '!hidden !h-0 !overflow-hidden',
+                  footerPages: '!hidden',
                   identityPreview: '!hidden',
                   alternativeMethodsBlockButton: '!hidden',
                   internal_footerPageLink: '!hidden',
                 },
-                layout: {
-                  socialButtonsPlacement: 'top',
-                },
+                layout: { socialButtonsPlacement: 'top' },
               }}
             />
           </div>

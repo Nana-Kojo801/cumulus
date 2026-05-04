@@ -219,10 +219,7 @@ export function gpaHistory(
   criteria: Criterion[],
   entries: ScoreEntry[]
 ): Array<{ label: string; gpa: number | null }> {
-  const sorted = [...semesters].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.term - b.term;
-  });
+  const sorted = [...semesters].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
   return sorted.map(s => ({
     label: s.name,
     gpa: semesterGPA(s.id, courses, criteria, entries).gpa,
@@ -232,4 +229,12 @@ export function gpaHistory(
 export function letterForPoints(points: number): string {
   const match = GRADE_SCALE.find(g => g.points === points);
   return match?.letter ?? 'E';
+}
+
+export function honorFor(gpa: number | null): string | null {
+  if (gpa === null) return null;
+  if (gpa >= 3.85) return 'Summa Cum Laude';
+  if (gpa >= 3.70) return 'Magna Cum Laude';
+  if (gpa >= 3.50) return 'Cum Laude';
+  return null;
 }

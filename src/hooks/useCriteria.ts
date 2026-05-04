@@ -1,5 +1,6 @@
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { useSyncContext } from '@/contexts/SyncContext';
 import type { Criterion } from '@/db/schema';
 
 function mapCriterion(doc: { _id: string; courseId: string; name: string; weight: number; instanceCount: number; canvasGroupId?: number; createdAt: number }): Criterion {
@@ -7,13 +8,12 @@ function mapCriterion(doc: { _id: string; courseId: string; name: string; weight
 }
 
 export function useCriteria(): Criterion[] | undefined {
-  const docs = useQuery(api.criteria.list);
-  if (docs === undefined) return undefined;
-  return docs.map(mapCriterion);
+  return useSyncContext().criteria;
 }
 
 export function useCriteriaByCourse(courseId: string | undefined): Criterion[] {
-  const docs = useQuery(api.criteria.byCourse, courseId ? { courseId } : 'skip');
-  if (!docs) return [];
-  return docs.map(mapCriterion);
+  const criteria = useSyncContext().criteria;
+  const doc = useQuery(api.criteria.byCourse, courseId ? { courseId } : 'skip');
+  if (doc) return doc.map(mapCriterion);
+  return criteria?.filter(c => c.courseId === courseId) ?? [];
 }

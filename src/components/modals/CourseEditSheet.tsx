@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { IconMinus, IconPlus } from '@/components/icons';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
@@ -29,23 +29,39 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [shortName, setShortName] = useState('');
   const [credits, setCredits] = useState(3);
   const [semesterId, setSemesterId] = useState('');
 
+  // Use refs so the init effect only fires on open transition, not on every re-render
+  // of existingCourse (which changes reference each render and would reset typed input).
+  const existingCourseRef = useRef(existingCourse);
+  existingCourseRef.current = existingCourse;
+  const semestersRef = useRef(semesters);
+  semestersRef.current = semesters;
+  const initSemIdRef = useRef(initSemId);
+  initSemIdRef.current = initSemId;
+
   useEffect(() => {
     if (!open) return;
-    if (existingCourse) {
-      setName(existingCourse.name);
-      setCode(existingCourse.code ?? '');
-      setCredits(existingCourse.credits);
-      setSemesterId(existingCourse.semesterId);
+    const course = existingCourseRef.current;
+    const sems = semestersRef.current;
+    const semId = initSemIdRef.current;
+    if (course) {
+      setName(course.name);
+      setCode(course.code ?? '');
+      setShortName(course.shortName ?? '');
+      setCredits(course.credits);
+      setSemesterId(course.semesterId);
     } else {
       setName('');
       setCode('');
+      setShortName('');
       setCredits(3);
-      setSemesterId(initSemId ?? semesters.find(s => s.status === 'active')?.id ?? '');
+      setSemesterId(semId ?? sems.find(s => s.status === 'active')?.id ?? '');
     }
-  }, [open, existingCourse, initSemId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -54,23 +70,21 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
         semesterId,
         code: code.trim(),
         name: name.trim(),
+        shortName: shortName.trim() || undefined,
         credits,
         createdAt: Date.now(),
       });
       toast('Course created');
       onSaved?.(newId);
     } else {
-      await updateCourse({ id: courseId!, name: name.trim(), code: code.trim(), credits, semesterId });
+      await updateCourse({ id: courseId!, name: name.trim(), code: code.trim(), shortName: shortName.trim() || undefined, credits, semesterId });
       toast('Course updated');
       onSaved?.(courseId!);
     }
     onClose();
   }
 
-  const sorted = [...semesters].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.term - b.term;
-  });
+  const sorted = [...semesters].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 
   return (
     <Sheet open={open} onClose={onClose} title={isNew ? 'New Course' : 'Edit Course'} fullHeight>
@@ -95,6 +109,15 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
                 onChange={e => setCode(e.target.value)}
                 placeholder="e.g. CS 311"
                 className="font-mono uppercase"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cs-short-name">Short Name (optional)</Label>
+              <Input
+                id="cs-short-name"
+                value={shortName}
+                onChange={e => setShortName(e.target.value)}
+                placeholder="e.g. DB Systems"
               />
             </div>
             <div className="flex flex-col gap-1.5">

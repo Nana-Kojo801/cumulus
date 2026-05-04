@@ -31,7 +31,6 @@
       "Bash(pnpm run *)",
       "Bash(pnpm approve-builds *)",
       "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")",
-<<<<<<< HEAD
       "Bash(npx tsc *)",
       "Bash(npx convex *)",
       "Bash(node -e \"const m = require\\('./node_modules/convex/package.json'\\); console.log\\(m.version\\)\")",
@@ -42,12 +41,17 @@
       "PowerShell(Invoke-WebRequest -Uri \"https://api.anthropic.com/v1/design/h/E9EEdQkGSGmcUU4xFW0Mzw?open_file=Cumulus+-+Design+Canvas.html\" -OutFile \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\" -UseBasicParsing; Write-Output \"Download complete. File size: $\\(\\(Get-Item 'C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz'\\).Length\\) bytes\")",
       "Bash(curl -L -o \"/c/Users/PC/Documents/Coding/Projects/cumulus/design-bundle.tar.gz\" \"https://api.anthropic.com/v1/design/h/E9EEdQkGSGmcUU4xFW0Mzw?open_file=Cumulus+-+Design+Canvas.html\" -v)",
       "Bash(cp \"C:\\\\Users\\\\PC\\\\.claude\\\\projects\\\\c--Users-PC-Documents-Coding-Projects-cumulus\\\\6e3e30b6-2624-450a-b323-2e198c337e5c\\\\tool-results\\\\webfetch-1777859080973-4t60y8.bin\" \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\")",
-      "Bash(tar -xzf \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\" -C \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle\")"
-=======
+      "Bash(tar -xzf \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\" -C \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\src\" -Recurse -File)",
       "Bash(Select-Object FullName)",
-      "Bash(Get-ChildItem \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\convex\" -Recurse)"
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\convex\" -Recurse)",
+      "Bash(where inkscape *)",
+      "Bash(where magick *)",
+      "Bash(where convert *)",
+      "Bash(where ffmpeg *)",
+      "Bash(node -e \"require\\('canvas'\\)\")",
+      "Bash(node -e \"const sharp = require\\('sharp'\\); console.log\\('sharp ok', sharp.versions\\);\")",
+      "Bash(node -e ' *)"
     ]
   }
 }

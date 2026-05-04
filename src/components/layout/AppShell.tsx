@@ -1,18 +1,13 @@
-<<<<<<< HEAD
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery } from 'convex/react';
+import { useUser } from '@clerk/clerk-react';
 import { api } from '../../../convex/_generated/api';
 import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/icons';
-=======
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Sidebar } from './Sidebar';
 import { cn } from '@/lib/utils';
-import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/icons';
+import { useSyncContext } from '@/contexts/SyncContext';
 
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
@@ -23,13 +18,16 @@ import { Simulator } from '@/screens/Simulator';
 import { Settings } from '@/screens/Settings';
 import { CanvasSyncPreview } from '@/screens/CanvasSyncPreview';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
+import { AuthScreen } from '@/screens/AuthScreen';
 
 const MenuContext = createContext<{ open: () => void }>({ open: () => {} });
 export function useMenuOpen() { return useContext(MenuContext).open; }
 
+const USER_CACHE_KEY = 'cumulus-user-v1';
+
 function LoadingSpinner() {
   return (
-    <div className="h-screen flex items-center justify-center bg-(--c-bg)">
+    <div className="h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
       <div
         className="w-7 h-7 rounded-full animate-spin"
         style={{ border: '2px solid var(--c-line-2)', borderTopColor: 'var(--c-accent)' }}
@@ -67,9 +65,22 @@ function AppRoutes() {
 }
 
 export function AppShell() {
-  const user = useQuery(api.users.current);
-  const [width, setWidth] = useState(window.innerWidth);
+  const { isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const convexUser = useQuery(api.users.current);
+  const { isOnline, pendingCount } = useSyncContext();
 
+  const [cachedUser, setCachedUser] = useState<{ onboardingComplete: boolean } | null>(() => {
+    try { return JSON.parse(localStorage.getItem(USER_CACHE_KEY) ?? 'null'); } catch { return null; }
+  });
+
+  useEffect(() => {
+    if (convexUser) {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(convexUser));
+      setCachedUser(convexUser);
+    }
+  }, [convexUser]);
+
+  const [width, setWidth] = useState(window.innerWidth);
   useEffect(() => {
     const handler = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handler);
@@ -78,9 +89,12 @@ export function AppShell() {
 
   const openMenu = useCallback(() => {}, []);
 
-  if (user === undefined || user === null) return <LoadingSpinner />;
+  if (!clerkLoaded) return <LoadingSpinner />;
+  if (!isSignedIn) return <AuthScreen />;
 
-  if (!user.onboardingComplete) return <OnboardingScreen />;
+  const effectiveUser = convexUser ?? cachedUser;
+  if (convexUser === undefined && !cachedUser) return <LoadingSpinner />;
+  if (!effectiveUser || !effectiveUser.onboardingComplete) return <OnboardingScreen />;
 
   const isMobile = width <= 640;
   const isTablet = width > 640 && width <= 900;
@@ -89,33 +103,50 @@ export function AppShell() {
     <MenuContext.Provider value={{ open: openMenu }}>
       <div className="c-app flex h-full overflow-hidden relative">
         {!isMobile && <Sidebar collapsed={isTablet} />}
-<<<<<<< HEAD
-
         <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
           <AppRoutes />
-=======
-        <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0', isMobile && 'pb-16')}>
-          {children}
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
         </main>
       </div>
+
+      {/* Offline / sync indicator */}
+      <AnimatePresence>
+        {(!isOnline || pendingCount > 0) && (
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-0 inset-x-0 z-[500] flex items-center justify-center py-1.5 text-[11px] font-semibold gap-2"
+            style={{
+              background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
+              color: 'white',
+            }}
+          >
+            {isOnline ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
+                Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 rounded-full bg-white/70" />
+                Offline — changes saved locally
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {isMobile && <MobileTabBar />}
     </MenuContext.Provider>
   );
 }
 
 const TAB_ITEMS = [
-<<<<<<< HEAD
-  { to: '/',          icon: IconHome,      label: 'Home',      end: true },
-  { to: '/semesters', icon: IconCalendar,  label: 'Semesters', end: false },
-  { to: '/simulator', icon: IconBarChart,  label: 'Simulate',  end: false },
-  { to: '/settings',  icon: IconSliders,   label: 'Settings',  end: false },
-=======
-  { to: '/',          icon: IconHome,     label: 'Home',     end: true },
+  { to: '/',          icon: IconHome,     label: 'Home',      end: true },
   { to: '/semesters', icon: IconCalendar, label: 'Semesters', end: false },
   { to: '/simulator', icon: IconBarChart, label: 'Simulate',  end: false },
   { to: '/settings',  icon: IconSliders,  label: 'Settings',  end: false },
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 ] as const;
 
 function MobileTabBar() {
@@ -135,7 +166,6 @@ function MobileTabBar() {
       {TAB_ITEMS.map(({ to, icon: Icon, label, end }) => (
         <NavLink key={to} to={to} end={end} className="flex-1">
           {({ isActive }) => (
-<<<<<<< HEAD
             <div className="flex flex-col items-center gap-0.5 py-2.5">
               <motion.div
                 style={{
@@ -161,30 +191,11 @@ function MobileTabBar() {
                   fontWeight: isActive ? 700 : 500,
                   color: isActive ? 'var(--c-accent)' : 'var(--c-text-4)',
                   letterSpacing: '0.02em',
-                  transition: 'color 150ms, font-weight 150ms',
+                  transition: 'color 150ms',
                 }}
               >
                 {label}
               </span>
-=======
-            <div className={cn(
-              'flex flex-col items-center justify-center gap-1 py-2.5 transition-colors',
-              isActive ? 'text-(--c-accent)' : 'text-(--c-text-4)'
-            )}>
-              <motion.div
-                animate={{ scale: isActive ? 1.12 : 1 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 22 }}
-              >
-                <Icon size={21} strokeWidth={isActive ? 2.2 : 1.8} />
-              </motion.div>
-              <span className="text-[10px] tracking-wide">{label}</span>
-              {isActive && (
-                <motion.span
-                  layoutId="tab-indicator"
-                  className="absolute bottom-[calc(env(safe-area-inset-bottom)+2px)] w-5 h-[3px] rounded-full bg-(--c-accent)"
-                />
-              )}
->>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             </div>
           )}
         </NavLink>
