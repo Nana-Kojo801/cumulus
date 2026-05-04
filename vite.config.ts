@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'Cumulus',
         short_name: 'Cumulus',
-        description: 'Local-first GPA tracker for Ashesi University',
+        description: 'GPA tracker for Ashesi University',
         theme_color: '#1e2133',
         background_color: '#1e2133',
         display: 'standalone',

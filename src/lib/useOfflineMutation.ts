@@ -16,7 +16,7 @@ export function useOfflineMutation<Args extends Record<string, unknown>, Return>
 
   return useCallback(async (args: Args) => {
     if (isOnline) {
-      return convexMutation(args);
+      return (convexMutation as any)(args);
     }
 
     const localArgs = buildLocalArgs(args);

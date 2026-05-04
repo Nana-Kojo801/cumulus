@@ -276,8 +276,8 @@ async function replayPendingMutations(convex: ReturnType<typeof useConvex>): Pro
         const criterionId = idMap.get(a.criterionId as string) ?? (a.criterionId as string);
         await convex.mutation(api.scoreEntries.saveAll, {
           criterionId,
-          ...(a as object),
-        } as Parameters<typeof api.scoreEntries.saveAll>[0]);
+          ...(a as any),
+        });
       }
       else if (name === 'data/clearAll') {
         await convex.mutation(api.data.clearAll, {});

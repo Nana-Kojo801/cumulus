@@ -34,7 +34,7 @@ async function canvasFetchAll<T>(path: string, token: string): Promise<T[]> {
   let url: string | null = `${CANVAS_BASE}${path}${path.includes('?') ? '&' : '?'}per_page=100`;
 
   while (url) {
-    const response = await fetch(url, {
+    const response: Response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
@@ -42,8 +42,8 @@ async function canvasFetchAll<T>(path: string, token: string): Promise<T[]> {
     }
     results.push(...(await response.json() as T[]));
 
-    const link = response.headers.get('Link') ?? '';
-    const next = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+    const link: string = response.headers.get('Link') ?? '';
+    const next: string | null = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
     url = next ? proxyUrl(next) : null;
   }
 
