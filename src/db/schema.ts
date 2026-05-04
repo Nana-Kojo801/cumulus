@@ -1,5 +1,3 @@
-import Dexie, { type Table } from 'dexie';
-
 export interface Semester {
   id: string;
   name: string;
@@ -49,33 +47,3 @@ export interface CanvasConnection {
   studentId: number;
   lastSyncedAt?: number;
 }
-
-export class CumulusDB extends Dexie {
-  semesters!: Table<Semester>;
-  courses!: Table<Course>;
-  criteria!: Table<Criterion>;
-  scoreEntries!: Table<ScoreEntry>;
-  canvasConnections!: Table<CanvasConnection>;
-
-  constructor() {
-    super('CumulusDB');
-    this.version(1).stores({
-      semesters: 'id, status, year, term',
-    });
-    this.version(2).stores({
-      semesters: 'id, status, year, term, createdAt',
-      courses: 'id, semesterId, createdAt',
-      criteria: 'id, courseId, createdAt',
-      scoreEntries: 'id, criterionId, createdAt',
-    });
-    this.version(3).stores({
-      semesters: 'id, status, year, term, createdAt',
-      courses: 'id, semesterId, createdAt, canvasId',
-      criteria: 'id, courseId, createdAt',
-      scoreEntries: 'id, criterionId, createdAt, canvasAssignmentId',
-      canvasConnections: 'id',
-    });
-  }
-}
-
-export const db = new CumulusDB();

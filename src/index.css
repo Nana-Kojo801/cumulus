@@ -1,81 +1,569 @@
 @import "tailwindcss";
 
 @theme {
-  /* Both sans and serif point to Inter — keeps all existing font-serif class
-     usages working without touching every component file. */
-  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans:  'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', 'Plus Jakarta Sans', serif;
   --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* App design-system tokens — plain CSS custom properties, not Tailwind theme */
+/* ── Design-system tokens — light mode (default) ────────────── */
 :root {
-  --c-bg:        oklch(0.16 0.012 250);
-  --c-bg-2:      oklch(0.19 0.012 250);
-  --c-surface:   oklch(0.215 0.014 250);
-  --c-surface-2: oklch(0.245 0.014 250);
-  --c-surface-3: oklch(0.28 0.015 250);
-  --c-elevated:  oklch(0.235 0.014 250);
+  /* Surfaces */
+  --c-bg:        #FAF6F0;
+  --c-bg-2:      #FFFFFF;
+  --c-surface:   #FFFFFF;
+  --c-surface-2: #F4EEE6;
+  --c-surface-3: #EBE2D5;
+  --c-elevated:  #FFFFFF;
 
-  --c-line:      oklch(1 0 0 / 0.07);
-  --c-line-2:    oklch(1 0 0 / 0.12);
-  --c-line-3:    oklch(1 0 0 / 0.18);
+  /* Hairlines */
+  --c-line:   rgba(60, 30, 30, 0.08);
+  --c-line-2: rgba(60, 30, 30, 0.14);
+  --c-line-3: rgba(60, 30, 30, 0.22);
 
-  --c-text:      oklch(0.96 0.005 250);
-  --c-text-2:    oklch(0.78 0.008 250);
-  --c-text-3:    oklch(0.6 0.01 250);
-  --c-text-4:    oklch(0.46 0.012 250);
+  /* Text */
+  --c-text:   #1A1010;
+  --c-text-2: #4A2E2E;
+  --c-text-3: #7A6060;
+  --c-text-4: #A89090;
 
-  --c-accent:    oklch(0.82 0.09 230);
-  --c-accent-2:  oklch(0.72 0.11 230);
-  --c-accent-bg: oklch(0.82 0.09 230 / 0.12);
+  /* Ashesi burgundy */
+  --c-accent:      #8B1E2D;
+  --c-accent-2:    #6B141F;
+  --c-accent-3:    #B8324A;
+  --c-accent-bg:   #F5E1E5;
+  --c-accent-bg-2: #EDD0D6;
 
-  --c-grade-a:   oklch(0.82 0.09 155);
-  --c-grade-b:   oklch(0.82 0.09 95);
-  --c-grade-c:   oklch(0.78 0.1 60);
-  --c-grade-d:   oklch(0.74 0.1 30);
-  --c-grade-e:   oklch(0.7 0.1 15);
+  /* Gold */
+  --c-gold:    #C9A35E;
+  --c-gold-bg: #F5EBD8;
+  --c-cream:   #F4EEE6;
 
-  --radius-r1: 6px;
-  --radius-r2: 10px;
-  --radius-r3: 14px;
-  --radius-r4: 18px;
-  --radius-r5: 22px;
+  /* Semantic */
+  --c-success:    #3F7D5F;
+  --c-success-bg: #E0EDE4;
+  --c-warn:       #C97D2F;
+  --c-warn-bg:    #F8E8D4;
+  --c-danger:     #B8324A;
+  --c-danger-bg:  #F5DDE2;
+  --c-coral-bg:   #F5DDE2;
+
+  /* Grade bands */
+  --c-grade-a: #3F7D5F;
+  --c-grade-b: #6B8E47;
+  --c-grade-c: #C9A35E;
+  --c-grade-d: #C97D2F;
+  --c-grade-e: #8B1E2D;
+
+  /* Border radii */
+  --r-1: 8px;
+  --r-2: 12px;
+  --r-3: 18px;
+  --r-4: 24px;
+  --r-5: 32px;
+
+  /* Legacy aliases — kept so existing rounded-(--radius-r*) classes still work */
+  --radius-r1: 8px;
+  --radius-r2: 12px;
+  --radius-r3: 18px;
+  --radius-r4: 24px;
+  --radius-r5: 32px;
+
+  /* Font stacks (used in component CSS) */
+  --f-ui:      'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --f-display: 'Fraunces', 'Plus Jakarta Sans', serif;
+  --f-mono:    ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/*
-  DO NOT add a bare `* { margin: 0; padding: 0 }` reset here.
-  In Tailwind v4, utilities live inside @layer utilities. Unlayered CSS
-  has higher cascade priority than any named @layer, so an unlayered `*`
-  rule would silently override every padding/margin utility class.
-  Tailwind's own preflight (included via @import "tailwindcss") handles
-  the box-model reset inside @layer base, where it belongs.
-*/
+/* ── Dark mode — warm burgundy night ────────────────────────── */
+[data-theme="dark"] {
+  --c-bg:        #1A0E10;
+  --c-bg-2:      #221518;
+  --c-surface:   #271A1D;
+  --c-surface-2: #2F2024;
+  --c-surface-3: #3A282D;
+  --c-elevated:  #2F2024;
 
+  --c-line:   rgba(255, 220, 200, 0.07);
+  --c-line-2: rgba(255, 220, 200, 0.13);
+  --c-line-3: rgba(255, 220, 200, 0.22);
+
+  --c-text:   #F5E8E0;
+  --c-text-2: #D4BCAE;
+  --c-text-3: #A28A82;
+  --c-text-4: #6E5A56;
+
+  --c-accent:      #C9445D;
+  --c-accent-2:    #A82D45;
+  --c-accent-3:    #E07088;
+  --c-accent-bg:   rgba(201, 68, 93, 0.18);
+  --c-accent-bg-2: rgba(201, 68, 93, 0.28);
+
+  --c-gold:    #D9B978;
+  --c-gold-bg: rgba(217, 185, 120, 0.16);
+  --c-cream:   rgba(244, 238, 230, 0.06);
+
+  --c-success-bg: rgba(63, 125, 95, 0.22);
+  --c-warn-bg:    rgba(201, 125, 47, 0.22);
+  --c-danger-bg:  rgba(184, 50, 74, 0.22);
+  --c-coral-bg:   rgba(184, 50, 74, 0.22);
+
+  --c-grade-e: #E07088;
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--f-ui);
   background-color: var(--c-bg);
   color: var(--c-text);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum", "ss01";
 }
 
-/* Scrollbar */
+/* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--c-line-3); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--c-text-4); }
 
-/* Diagonal stripe for pending (unscored) entries */
+/* ── Typography helpers ─────────────────────────────────────── */
+.tnum  { font-variant-numeric: tabular-nums; }
+.mono  { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.serif { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.025em; }
+
+/* ── App shell background ───────────────────────────────────── */
+.c-app {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, #F5E1E5 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, #F5EBD8 0%, transparent 55%),
+    linear-gradient(180deg, #FAF6F0 0%, #F4EEE6 100%);
+  color: var(--c-text);
+  min-height: 100%;
+  font-family: var(--f-ui);
+  position: relative;
+}
+.c-app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-conic-gradient(
+      from 0deg at 50% -10%,
+      rgba(139, 30, 45, 0.025) 0deg 4deg,
+      transparent 4deg 14deg
+    );
+  opacity: 0.6;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, black 0%, transparent 60%);
+  -webkit-mask-image: linear-gradient(180deg, black 0%, transparent 60%);
+}
+[data-theme="dark"] .c-app {
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(201, 68, 93, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(217, 185, 120, 0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #1A0E10 0%, #221518 100%);
+}
+[data-theme="dark"] .c-app::before { opacity: 0.8; }
+
+/* ── Topbar ─────────────────────────────────────────────────── */
+:root { --c-topbar-bg: rgba(255, 255, 255, 0.75); }
+[data-theme="dark"] { --c-topbar-bg: rgba(34, 21, 24, 0.75); }
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.c-side {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--c-line);
+}
+[data-theme="dark"] .c-side {
+  background: rgba(34, 21, 24, 0.65);
+}
+
+/* Brand mark */
+.c-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 6px;
+}
+.c-brand .mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--c-accent) 0%, var(--c-accent-2) 100%);
+  position: relative;
+  box-shadow: 0 6px 16px -6px rgba(139, 30, 45, 0.5);
+  flex-shrink: 0;
+}
+.c-brand .mark::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 17px;
+  width: 16px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--c-gold);
+  box-shadow: 9px -4px 0 -2px var(--c-cream);
+}
+.c-brand .name {
+  font: 800 18px var(--f-ui);
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+}
+.c-brand .sub {
+  font: 600 10px var(--f-ui);
+  color: var(--c-text-3);
+  margin-top: 1px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Nav items */
+.c-nav { display: flex; flex-direction: column; gap: 2px; }
+.c-nav-section {
+  font: 700 10.5px var(--f-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-text-4);
+  padding: 10px 12px 6px;
+}
+.c-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  color: var(--c-text-2);
+  cursor: pointer;
+  font: 600 14px var(--f-ui);
+  user-select: none;
+  letter-spacing: -0.01em;
+  transition: background 120ms, color 120ms;
+  text-decoration: none;
+}
+.c-nav-item:hover { background: rgba(255, 255, 255, 0.7); color: var(--c-text); }
+.c-nav-item.on {
+  background: var(--c-text);
+  color: white;
+  box-shadow: 0 8px 18px -8px rgba(20, 30, 60, 0.4);
+}
+[data-theme="dark"] .c-nav-item:hover { background: var(--c-surface-2); }
+[data-theme="dark"] .c-nav-item.on {
+  background: var(--c-accent);
+  box-shadow: 0 8px 18px -8px rgba(201, 68, 93, 0.4);
+}
+
+/* ── Card ───────────────────────────────────────────────────── */
+.c-card {
+  background: var(--c-surface);
+  border-radius: var(--r-4);
+  box-shadow:
+    0 1px 0 rgba(20, 30, 60, 0.04),
+    0 8px 24px -12px rgba(20, 30, 60, 0.12);
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.c-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--c-text);
+  color: white;
+  border: 0;
+  font: 700 14px var(--f-ui);
+  cursor: pointer;
+  transition: transform 120ms, background 120ms, opacity 120ms;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+.c-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.c-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.c-btn.primary { background: var(--c-accent); }
+.c-btn.primary:hover:not(:disabled) { background: var(--c-accent-2); }
+.c-btn.ghost {
+  background: white;
+  color: var(--c-text);
+  box-shadow: inset 0 0 0 1.5px var(--c-line-2);
+}
+.c-btn.icon { width: 44px; padding: 0; justify-content: center; }
+.c-btn.sm { height: 32px; padding: 0 14px; font-size: 12.5px; }
+.c-btn.lg { height: 52px; padding: 0 26px; font-size: 15px; }
+[data-theme="dark"] .c-btn.ghost {
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: inset 0 0 0 1.5px var(--c-line-2);
+}
+[data-theme="dark"] .c-btn:not(.primary):not(.ghost):not(.danger) {
+  background: var(--c-surface-3);
+  color: var(--c-text);
+}
+
+/* ── Input ──────────────────────────────────────────────────── */
+.c-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  background: var(--c-surface-2);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-3);
+  color: var(--c-text);
+  font: 600 14px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.c-input:focus { border-color: var(--c-accent); background: var(--c-surface); }
+.c-input::placeholder { color: var(--c-text-4); font-weight: 500; }
+
+/* ── Label ──────────────────────────────────────────────────── */
+.c-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c-text-3);
+  font-weight: 700;
+}
+
+/* ── Chip ───────────────────────────────────────────────────── */
+.c-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--f-ui);
+}
+.c-chip.accent { background: var(--c-accent); color: white; }
+.c-chip.dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* ── Grade pill ─────────────────────────────────────────────── */
+.c-grade-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font: 800 13px var(--f-ui);
+  letter-spacing: 0.02em;
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+.c-grade-pill[data-band="A"] { background: var(--c-success-bg); color: var(--c-grade-a); }
+.c-grade-pill[data-band="B"] { background: #E5EED5; color: var(--c-grade-b); }
+.c-grade-pill[data-band="C"] { background: var(--c-gold-bg); color: #8E6F2E; }
+.c-grade-pill[data-band="D"] { background: var(--c-warn-bg); color: var(--c-grade-d); }
+.c-grade-pill[data-band="E"] { background: var(--c-danger-bg); color: var(--c-grade-e); }
+.c-grade-pill[data-band="-"] { color: var(--c-text-4); background: var(--c-surface-2); }
+[data-theme="dark"] .c-grade-pill[data-band="A"] { background: rgba(63, 125, 95, 0.22); color: #7CC097; }
+[data-theme="dark"] .c-grade-pill[data-band="B"] { background: rgba(107, 142, 71, 0.22); color: #B5D188; }
+[data-theme="dark"] .c-grade-pill[data-band="C"] { background: rgba(201, 163, 94, 0.22); color: #E5C887; }
+[data-theme="dark"] .c-grade-pill[data-band="D"] { background: rgba(201, 125, 47, 0.22); color: #E8B077; }
+[data-theme="dark"] .c-grade-pill[data-band="E"] { background: rgba(184, 50, 74, 0.22); color: #E07088; }
+
+/* ── Section head ───────────────────────────────────────────── */
+.c-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0 0 18px;
+  flex-wrap: wrap;
+}
+.c-section-head h2 {
+  font: 600 28px var(--f-display);
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: var(--c-text);
+}
+.c-section-head .sub {
+  font: 600 12px var(--f-ui);
+  color: var(--c-text-3);
+}
+
+/* ── Big numerals ───────────────────────────────────────────── */
+.c-bignum {
+  font-family: var(--f-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  color: var(--c-text);
+}
+
+/* ── Hero card ──────────────────────────────────────────────── */
+.hero-card {
+  background: linear-gradient(135deg, var(--c-accent-2) 0%, var(--c-accent) 60%, #6B141F 100%);
+  color: white;
+  border-radius: var(--r-5);
+  padding: 28px 32px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(201, 163, 94, 0.30), transparent 70%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.hero-card::after {
+  content: "";
+  position: absolute;
+  left: 60%;
+  bottom: -40px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(255, 220, 200, 0.18), transparent 70%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+[data-theme="dark"] .hero-card {
+  background: linear-gradient(135deg, #6B141F 0%, #1A0E10 100%);
+}
+
+/* ── Progress bar ───────────────────────────────────────────── */
+.c-progress {
+  position: relative;
+  height: 6px;
+  background: var(--c-surface-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.c-progress > .fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, var(--c-accent), var(--c-gold));
+  border-radius: 999px;
+  transition: width 0.55s ease;
+}
+
+/* ── Toggle switch ──────────────────────────────────────────── */
+.c-toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  background: var(--c-surface-3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 200ms;
+  border: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+.c-toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(20, 30, 60, 0.2);
+  transition: left 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.c-toggle.on { background: var(--c-accent); }
+.c-toggle.on::after { left: 23px; }
+[data-theme="dark"] .c-toggle::after { background: #F5E8E0; }
+
+/* ── Semester accordion ─────────────────────────────────────── */
+.c-acc { border-radius: var(--r-3); overflow: hidden; }
+.c-acc-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: background 120ms;
+  border-bottom: 1px solid var(--c-line);
+  user-select: none;
+}
+.c-acc-row:last-child { border-bottom: 0; }
+.c-acc-row:hover { background: var(--c-surface-2); }
+.c-acc-row.open { background: var(--c-surface-2); }
+.c-acc-row .chev {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--c-text-3);
+}
+.c-acc-row.open .chev {
+  transform: rotate(90deg);
+  color: var(--c-text);
+}
+
+.c-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.c-acc-panel.open { grid-template-rows: 1fr; }
+.c-acc-panel > .inner { overflow: hidden; }
+.c-acc-courses { }
+.c-acc-course {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 20px 12px 40px;
+  border-top: 1px solid var(--c-line);
+  cursor: pointer;
+  transition: background 120ms;
+  text-decoration: none;
+  color: inherit;
+}
+.c-acc-course:hover { background: var(--c-surface-2); }
+
+
+/* ── Misc ───────────────────────────────────────────────────── */
+.c-hr { height: 1px; background: var(--c-line); border: 0; }
+
+.c-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+  font: 700 11px var(--f-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.c-link { color: var(--c-accent); cursor: pointer; font-weight: 700; }
+.c-link:hover { text-decoration: underline; }
+
 .pending-stripe {
   background-image: repeating-linear-gradient(
     -45deg,
     transparent,
     transparent 4px,
-    oklch(1 0 0 / 0.025) 4px,
-    oklch(1 0 0 / 0.025) 8px
+    rgba(139, 30, 45, 0.04) 4px,
+    rgba(139, 30, 45, 0.04) 8px
   );
 }
 

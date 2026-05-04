@@ -1,27 +1,23 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, TrendingUp, Settings, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSemesters, useActiveSemester } from '@/hooks/useSemesters';
 import { useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, courseRunningGrade } from '@/lib/calculations';
-import { fmtGPA } from '@/lib/utils';
+import { fmtGPA, cleanCourseName } from '@/lib/utils';
 import type { Course } from '@/db/schema';
+import {
+  IconHome, IconCalendar, IconBarChart, IconSliders,
+} from '@/components/icons';
 
 interface SidebarProps {
   collapsed?: boolean;
-  /** When set, sidebar renders as a mobile drawer and this fires on close */
   onClose?: () => void;
 }
 
 function NavItem({
-  to,
-  icon: Icon,
-  label,
-  collapsed,
-  end,
-  onClick,
+  to, icon: Icon, label, collapsed, end, onClick,
 }: {
   to: string;
   icon: React.ElementType;
@@ -31,31 +27,21 @@ function NavItem({
   onClick?: () => void;
 }) {
   return (
-    <NavLink
-      to={to}
-      end={end}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2.5 px-3 py-2.5 rounded-(--radius-r2) transition-all text-[14px]',
-          isActive
-            ? 'bg-(--c-surface-2) text-(--c-text) border border-(--c-line-2)'
-            : 'text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text-2)',
-          collapsed && 'justify-center px-2'
-        )
-      }
-    >
-      <Icon size={16} className="shrink-0" />
-      {!collapsed && <span>{label}</span>}
+    <NavLink to={to} end={end} onClick={onClick} className="block">
+      {({ isActive }) => (
+        <div
+          className={cn('c-nav-item', isActive && 'on', collapsed && 'justify-center px-3')}
+        >
+          <Icon size={16} className="shrink-0" />
+          {!collapsed && <span className="truncate">{label}</span>}
+        </div>
+      )}
     </NavLink>
   );
 }
 
 function CourseNavItem({
-  course,
-  collapsed,
-  grade,
-  onClick,
+  course, collapsed, grade, onClick,
 }: {
   course: Course;
   collapsed?: boolean;
@@ -63,31 +49,24 @@ function CourseNavItem({
   onClick?: () => void;
 }) {
   return (
-    <NavLink
-      to={`/courses/${course.id}`}
-      onClick={onClick}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2 px-3 py-2 rounded-(--radius-r2) transition-all',
+    <NavLink to={`/courses/${course.id}`} onClick={onClick} className="block">
+      {({ isActive }) => (
+        <div className={cn(
+          'flex items-center gap-2 px-3.5 py-2 rounded-[12px] transition-all cursor-pointer text-[13px]',
           isActive
-            ? 'bg-(--c-surface-2) text-(--c-text) border border-(--c-line-2)'
+            ? 'bg-(--c-accent-bg) text-(--c-accent) font-semibold'
             : 'text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text-2)',
           collapsed && 'justify-center px-2'
-        )
-      }
-    >
-      {!collapsed ? (
-        <>
-          {course.code && (
-            <span className="font-mono text-[11px] text-(--c-text-4) uppercase shrink-0 w-[52px] truncate">
-              {course.code}
-            </span>
+        )}>
+          {!collapsed ? (
+            <>
+              <span className="flex-1 truncate font-medium">{cleanCourseName(course.name)}</span>
+              <span className="text-[12px] font-mono tabular-nums text-(--c-text-4) shrink-0">{grade}</span>
+            </>
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-(--c-surface-3)" />
           )}
-          <span className="text-[13px] flex-1 truncate">{course.name}</span>
-          <span className="text-[12px] font-mono tabular-nums text-(--c-text-3) shrink-0">{grade}</span>
-        </>
-      ) : (
-        <BookOpen size={15} className="shrink-0" />
+        </div>
       )}
     </NavLink>
   );
@@ -102,62 +81,56 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
 
   const cumGPA = cumulativeGPA(semesters, courses, criteria, entries);
   const activeCourses = courses.filter(c => c.semesterId === activeSemester?.id);
-
   const isDrawer = !!onClose;
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col h-full bg-(--c-bg-2) border-r border-(--c-line) shrink-0 transition-all duration-200',
-        isDrawer ? 'w-72' : collapsed ? 'w-16' : 'w-60'
-      )}
-    >
+    <aside className={cn(
+      'c-side flex flex-col h-full shrink-0 transition-all duration-200',
+      isDrawer ? 'w-72' : collapsed ? 'w-16' : 'w-64'
+    )}>
       {/* Brand */}
-      <div className={cn('px-4 py-4 border-b border-(--c-line) shrink-0', collapsed && !isDrawer && 'px-2')}>
-        <div className={cn('flex items-center gap-3', collapsed && !isDrawer && 'justify-center')}>
-          <CloudMark />
-          {(!collapsed || isDrawer) && (
+      <div className={cn(
+        'px-4 py-5 border-b border-(--c-line) shrink-0',
+        collapsed && !isDrawer && 'px-2 py-4'
+      )}>
+        {collapsed && !isDrawer ? (
+          <div className="flex justify-center">
+            <BrandMark />
+          </div>
+        ) : (
+          <div className="c-brand">
+            <BrandMark />
             <div className="flex-1 min-w-0">
-              <div className="text-[15px] font-semibold tracking-tight text-(--c-text)">Cumulus</div>
-              <div className="text-[10px] font-mono text-(--c-text-4)">v1.0 · local</div>
+              <div className="c-brand-name" style={{ font: '800 18px var(--f-ui)', letterSpacing: '-0.02em', color: 'var(--c-text)' }}>
+                Cumulus
+              </div>
+              <div style={{ font: '600 10px var(--f-ui)', color: 'var(--c-text-3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>
+                v1.0 · cloud
+              </div>
             </div>
-          )}
-          {isDrawer && (
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-(--c-text-3) hover:bg-(--c-surface-2) hover:text-(--c-text) transition-all cursor-pointer shrink-0"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-4">
+      <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
         {/* Workspace */}
         <section>
           {(!collapsed || isDrawer) && (
-            <div className="px-3 mb-1">
-              <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4)">Workspace</span>
-            </div>
+            <div className="c-nav-section">Workspace</div>
           )}
-          <div className="flex flex-col gap-0.5">
-            <NavItem to="/" icon={LayoutDashboard} label="Dashboard" collapsed={collapsed && !isDrawer} end onClick={onClose} />
-            <NavItem to="/semesters" icon={BookOpen} label="Semesters" collapsed={collapsed && !isDrawer} onClick={onClose} />
-            <NavItem to="/simulator" icon={TrendingUp} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
+          <div className="c-nav">
+            <NavItem to="/" icon={IconHome} label="Dashboard" collapsed={collapsed && !isDrawer} end onClick={onClose} />
+            <NavItem to="/semesters" icon={IconCalendar} label="Semesters" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            <NavItem to="/simulator" icon={IconBarChart} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
           </div>
         </section>
 
-        {/* Active Semester courses */}
+        {/* Active semester courses */}
         {activeSemester && activeCourses.length > 0 && (
           <section>
             {(!collapsed || isDrawer) && (
-              <div className="px-3 mb-1">
-                <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4) truncate block">
-                  {activeSemester.name}
-                </span>
-              </div>
+              <div className="c-nav-section truncate">{activeSemester.name}</div>
             )}
             <div className="flex flex-col gap-0.5">
               {activeCourses.map(course => {
@@ -181,29 +154,44 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
         {/* System */}
         <section>
           {(!collapsed || isDrawer) && (
-            <div className="px-3 mb-1">
-              <span className="text-[10px] uppercase tracking-[0.1em] text-(--c-text-4)">System</span>
-            </div>
+            <div className="c-nav-section">System</div>
           )}
-          <div className="flex flex-col gap-0.5">
-            <NavItem to="/settings" icon={Settings} label="Settings" collapsed={collapsed && !isDrawer} onClick={onClose} />
-            <NavItem to="/import" icon={Upload} label="Import Template" collapsed={collapsed && !isDrawer} onClick={onClose} />
+          <div className="c-nav">
+            <NavItem to="/settings" icon={IconSliders} label="Settings" collapsed={collapsed && !isDrawer} onClick={onClose} />
           </div>
         </section>
       </nav>
 
-      {/* Cumulative GPA */}
-      <div className={cn('px-4 py-4 border-t border-(--c-line) shrink-0', collapsed && !isDrawer && 'px-2 py-3')}>
+      {/* GPA footer */}
+      <div className={cn(
+        'px-5 py-4 border-t border-(--c-line) shrink-0',
+        collapsed && !isDrawer && 'px-2 py-3 flex justify-center'
+      )}>
         {collapsed && !isDrawer ? (
-          <div className="text-center font-mono text-[11px] text-(--c-text-3) tabular-nums">
+          <div
+            className="tabular-nums font-bold text-(--c-accent) text-[12px]"
+            style={{ fontFamily: 'var(--f-mono)' }}
+          >
             {fmtGPA(cumGPA.gpa)}
           </div>
         ) : (
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-4) mb-0.5">Cumulative GPA</div>
             <div
-              className="tabular-nums font-semibold text-(--c-text)"
-              style={{ fontSize: '28px', letterSpacing: '-0.028em' }}
+              style={{
+                fontSize: 10,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: 'var(--c-text-4)',
+                fontWeight: 700,
+                marginBottom: 4,
+                fontFamily: 'var(--f-ui)',
+              }}
+            >
+              Cumulative GPA
+            </div>
+            <div
+              className="c-bignum"
+              style={{ fontSize: 38, color: 'var(--c-text)' }}
             >
               {fmtGPA(cumGPA.gpa)}
             </div>
@@ -214,19 +202,32 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
   );
 }
 
-function CloudMark() {
+function BrandMark() {
   return (
     <div
-      className="w-8 h-8 rounded-(--radius-r1) shrink-0 flex items-center justify-center"
-      style={{ background: 'var(--c-surface-2)', border: '1px solid var(--c-line-2)' }}
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        background: 'linear-gradient(160deg, var(--c-accent) 0%, var(--c-accent-2) 100%)',
+        boxShadow: '0 6px 16px -6px rgba(139, 30, 45, 0.5)',
+        flexShrink: 0,
+        position: 'relative',
+      }}
     >
-      <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
-        <path
-          d="M15.5 6C15.5 3.51 13.49 1.5 11 1.5C9.26 1.5 7.76 2.49 7.01 3.93C6.68 3.77 6.31 3.68 5.92 3.68C4.52 3.68 3.38 4.82 3.38 6.22C3.38 6.26 3.38 6.3 3.39 6.34C2.29 6.64 1.5 7.65 1.5 8.85C1.5 10.32 2.7 11.5 4.18 11.5H15.82C17.57 11.5 19 10.08 19 8.32C19 6.86 17.98 5.64 16.61 5.25C16.24 5.58 15.88 5.8 15.5 6Z"
-          fill="white"
-          fillOpacity="0.9"
-        />
-      </svg>
+      {/* Gold cloud accent */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 8,
+          top: 17,
+          width: 16,
+          height: 10,
+          borderRadius: 999,
+          background: 'var(--c-gold)',
+          boxShadow: '9px -4px 0 -2px rgba(244, 238, 230, 0.8)',
+        }}
+      />
     </div>
   );
 }

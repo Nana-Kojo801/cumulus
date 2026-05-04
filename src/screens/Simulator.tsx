@@ -12,8 +12,7 @@ import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, courseRunningGrade, letterFor, pointsFor } from '@/lib/calculations';
 import { TARGET_GRADES, pointsForLetter } from '@/lib/gradeScale';
-import { fmtGPA } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { fmtGPA, cn, cleanCourseName } from '@/lib/utils';
 
 const RESET = '__current__';
 
@@ -65,7 +64,7 @@ export function Simulator() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Topbar breadcrumbs={[{ label: 'GPA Simulator' }]} onMenuOpen={onMenuOpen} />
+      <Topbar title="GPA Simulator" onMenuOpen={onMenuOpen} />
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
 
         {/* Target input */}
@@ -162,7 +161,7 @@ export function Simulator() {
 
                   return (
                     <div key={course.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex-1 text-[14px] text-(--c-text) truncate">{course.name}</span>
+                      <span className="flex-1 text-[14px] text-(--c-text) truncate">{cleanCourseName(course.name)}</span>
                       {currentLetter && !override && (
                         <GradePill letter={currentLetter} size="sm" />
                       )}

@@ -1,127 +1,155 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, Trash2 } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { IconPlus, IconTrash, IconChevronRight, IconEdit } from '@/components/icons';
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Sheet } from '@/components/ui/Sheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { Chip } from '@/components/ui/Chip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
+import { GradePill } from '@/components/ui/GradePill';
+import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourses } from '@/hooks/useCourses';
+import { cleanCourseName } from '@/lib/utils';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
-import { cumulativeGPA, semesterGPA } from '@/lib/calculations';
-import { fmtGPA } from '@/lib/utils';
-import { db } from '@/db/schema';
+import { cumulativeGPA, semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
+import { fmtGPA, fmtPct } from '@/lib/utils';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
+import type { Semester } from '@/db/schema';
 
-const listItem = {
-  hidden: { opacity: 0, y: 12 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.22, ease: 'easeOut', delay: i * 0.06 },
-  }),
-};
+function Stepper({ value, onChange, min = 1, max = 99 }: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer text-lg leading-none"
+      >
+        −
+      </button>
+      <span className="text-[22px] font-semibold tabular-nums text-(--c-text) w-8 text-center">{value}</span>
+      <button
+        type="button"
+        onClick={() => onChange(Math.min(max, value + 1))}
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer text-lg leading-none"
+      >
+        +
+      </button>
+    </div>
+  );
+}
 
-function NewSemesterModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+interface SemesterSheetProps {
+  open: boolean;
+  onClose: () => void;
+  existing?: Semester;
+}
+
+function SemesterSheet({ open, onClose, existing }: SemesterSheetProps) {
   const { toast } = useToast();
   const semesters = useSemesters() ?? [];
+  const createSemester = useMutation(api.semesters.create);
+  const updateSemester = useMutation(api.semesters.update);
+  const isNew = !existing;
+
   const [year, setYear] = useState(1);
   const [term, setTerm] = useState(1);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'complete' | 'active'>('active');
 
+  useEffect(() => {
+    if (open) {
+      if (existing) {
+        setYear(existing.year);
+        setTerm(existing.term);
+        setName(existing.name === `Year ${existing.year} · Semester ${existing.term}` ? '' : existing.name);
+        setStatus(existing.status);
+      } else {
+        setYear(1);
+        setTerm(1);
+        setName('');
+        setStatus('active');
+      }
+    }
+  }, [open, existing]);
+
   const autoName = `Year ${year} · Semester ${term}`;
-  const displayName = name || autoName;
+  const displayName = name.trim() || autoName;
 
   async function handleSave() {
-    if (status === 'active') {
-      const existing = semesters.find(s => s.status === 'active');
-      if (existing) await db.semesters.update(existing.id, { status: 'complete' });
+    if (isNew) {
+      await createSemester({ name: displayName, year, term, status, createdAt: Date.now() });
+      toast('Semester created');
+    } else {
+      await updateSemester({ id: existing!.id, name: displayName, year, term, status });
+      toast('Semester updated');
     }
-    await db.semesters.add({
-      id: uuidv4(),
-      name: displayName,
-      year,
-      term,
-      status,
-      createdAt: Date.now(),
-    });
-    toast('Semester created');
     onClose();
-    setName('');
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="New Semester" size="sm">
-      <div className="p-5 flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-3">
+    <Sheet open={open} onClose={onClose} title={isNew ? 'New Semester' : 'Edit Semester'} fullHeight>
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 flex flex-col gap-5">
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>Year</Label>
+              <Stepper value={year} onChange={setYear} min={1} max={8} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Semester</Label>
+              <Stepper value={term} onChange={setTerm} min={1} max={4} />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-1.5">
-            <Label>Year</Label>
-            <Select value={String(year)} onValueChange={v => setYear(+v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4].map(y => (
-                  <SelectItem key={y} value={String(y)}>Year {y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Custom Name</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={autoName} />
+            <p className="text-[12px] text-(--c-text-4)">Leave blank to use auto-generated name</p>
           </div>
+
           <div className="flex flex-col gap-1.5">
-            <Label>Semester</Label>
-            <Select value={String(term)} onValueChange={v => setTerm(+v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[1, 2].map(t => (
-                  <SelectItem key={t} value={String(t)}>Semester {t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Status</Label>
+            <div className="flex gap-2">
+              {(['active', 'complete'] as const).map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatus(s)}
+                  className="flex-1 h-9 rounded-xl text-[13px] font-semibold border transition-all cursor-pointer"
+                  style={{
+                    background: status === s ? 'var(--c-accent-bg)' : 'var(--c-surface-2)',
+                    color: status === s ? 'var(--c-accent)' : 'var(--c-text-2)',
+                    borderColor: status === s ? 'var(--c-accent)' : 'var(--c-line)',
+                  }}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+            {status === 'active' && isNew && semesters.some(s => s.status === 'active') && (
+              <p className="text-[12px]" style={{ color: 'var(--c-warn)' }}>
+                The current active semester will be marked complete.
+              </p>
+            )}
           </div>
+
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Name</Label>
-          <Input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder={autoName}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Status</Label>
-          <div className="flex gap-2">
-            {(['active', 'complete'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`flex-1 h-9 rounded-(--radius-r2) text-[13px] border transition-all cursor-pointer ${
-                  status === s
-                    ? 'bg-(--c-accent-bg) text-(--c-accent) border-(--c-accent)/30'
-                    : 'bg-(--c-surface-2) text-(--c-text-2) border-(--c-line)'
-                }`}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-          {status === 'active' && semesters.some(s => s.status === 'active') && (
-            <p className="text-[12px] text-(--c-grade-c)">The current active semester will be marked complete.</p>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="shrink-0 border-t border-(--c-line) flex justify-end gap-2 px-5 py-4">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>Create Semester</Button>
+          <Button variant="primary" onClick={handleSave}>
+            {isNew ? 'Create Semester' : 'Save Changes'}
+          </Button>
         </div>
       </div>
-    </Modal>
+    </Sheet>
   );
 }
 
@@ -130,9 +158,22 @@ export function Semesters() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showNew, setShowNew] = useState(false);
+  const [editingSem, setEditingSem] = useState<Semester | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [autoOpened, setAutoOpened] = useState(false);
+  const [addCourseSemId, setAddCourseSemId] = useState<string | null>(null);
 
+  const removeSemester = useMutation(api.semesters.remove);
   const semesters = useSemesters() ?? [];
+
+  useEffect(() => {
+    if (autoOpened || semesters.length === 0) return;
+    const active = semesters.find(s => s.status === 'active');
+    if (active) setOpenIds(new Set([active.id]));
+    setAutoOpened(true);
+  }, [semesters, autoOpened]);
+
   const courses = useCourses() ?? [];
   const criteria = useCriteria() ?? [];
   const entries = useScoreEntries() ?? [];
@@ -140,16 +181,17 @@ export function Semesters() {
   const cumulative = cumulativeGPA(semesters, courses, criteria, entries);
 
   async function handleDelete(semId: string) {
-    const semCourses = courses.filter(c => c.semesterId === semId);
-    const semCriteria = criteria.filter(cr => semCourses.some(c => c.id === cr.courseId));
-    const semEntries = entries.filter(e => semCriteria.some(cr => cr.id === e.criterionId));
-    await db.transaction('rw', db.semesters, db.courses, db.criteria, db.scoreEntries, async () => {
-      await db.scoreEntries.bulkDelete(semEntries.map(e => e.id));
-      await db.criteria.bulkDelete(semCriteria.map(cr => cr.id));
-      await db.courses.bulkDelete(semCourses.map(c => c.id));
-      await db.semesters.delete(semId);
-    });
+    await removeSemester({ id: semId });
     toast('Semester deleted');
+  }
+
+  function toggleOpen(id: string) {
+    setOpenIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   const sorted = [...semesters].sort((a, b) => {
@@ -160,100 +202,197 @@ export function Semesters() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
-        breadcrumbs={[{ label: 'Semesters' }]}
+        title="Semesters"
         onMenuOpen={onMenuOpen}
         actions={
           <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
-            <Plus size={14} /> New Semester
+            <IconPlus size={14} /> New
           </Button>
         }
       />
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-        {/* Cumulative summary */}
+      <div className="flex-1 overflow-y-auto p-5 lg:p-7 flex flex-col gap-6">
+
+        {/* Summary stats */}
         <motion.div
-          className="flex items-center gap-6"
+          className="grid grid-cols-2 gap-3"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] text-(--c-text-3)">Cumulative GPA</div>
-            <div className="text-[32px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.028em' }}>
-              {fmtGPA(cumulative.gpa)}
+          <div className="c-card p-4">
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-text-4)', fontWeight: 700, marginBottom: 6 }}>
+              Cumulative GPA
             </div>
+            <div className="c-bignum" style={{ fontSize: 32 }}>{fmtGPA(cumulative.gpa)}</div>
           </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] text-(--c-text-3)">Total Credits</div>
-            <div className="text-[32px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.028em' }}>
-              {cumulative.credits}
+          <div className="c-card p-4">
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-text-4)', fontWeight: 700, marginBottom: 6 }}>
+              Total Credits
             </div>
+            <div className="c-bignum" style={{ fontSize: 32 }}>{cumulative.credits}</div>
           </div>
         </motion.div>
 
-        {/* Semesters list */}
         {sorted.length === 0 ? (
-          <Card className="p-10 text-center">
-            <p className="text-(--c-text-3) text-[14px] mb-3">No semesters yet.</p>
+          <div
+            style={{
+              padding: '60px 24px',
+              border: '1.5px dashed var(--c-line-2)',
+              borderRadius: 'var(--r-4)',
+              textAlign: 'center',
+              color: 'var(--c-text-3)',
+            }}
+          >
+            <div style={{ fontFamily: 'var(--f-display)', fontSize: 26, color: 'var(--c-text-2)', marginBottom: 8 }}>
+              No semesters yet
+            </div>
+            <p style={{ fontSize: 13, marginBottom: 18 }}>Create your first semester to begin tracking.</p>
             <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
-              <Plus size={14} /> New Semester
+              <IconPlus size={14} /> New Semester
             </Button>
-          </Card>
+          </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {sorted.map((sem, i) => {
+          <motion.div
+            className="c-acc"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.06 }}
+          >
+            {sorted.map((sem) => {
               const { gpa, credits } = semesterGPA(sem.id, courses, criteria, entries);
               const semCourses = courses.filter(c => c.semesterId === sem.id);
-              const preview = semCourses.slice(0, 3).map(c => c.name);
+              const isOpen = openIds.has(sem.id);
+              const isActive = sem.status === 'active';
 
               return (
-                <motion.div key={sem.id} custom={i} variants={listItem} initial="hidden" animate="show">
-                  <Card className="overflow-hidden group">
-                    <div
-                      className="flex items-start gap-4 p-4 hover:bg-(--c-surface-2) transition-colors cursor-pointer"
-                      onClick={() => navigate(`/semesters/${sem.id}`)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[15px] font-medium text-(--c-text)">{sem.name}</span>
-                          <Chip variant={sem.status === 'active' ? 'accent' : 'default'} className="text-[11px]">
-                            {sem.status === 'active' ? 'Active' : 'Complete'}
-                          </Chip>
-                        </div>
-                        <div className="text-[12px] text-(--c-text-3)">
-                          {semCourses.length} courses · {credits} credits
-                        </div>
-                        {preview.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {preview.map((name, j) => (
-                              <span key={j} className="text-[12px] text-(--c-text-3)">
-                                {name}{j < preview.length - 1 ? ',' : ''}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                <div key={sem.id}>
+                  {/* Accordion header row */}
+                  <div
+                    className={`c-acc-row ${isOpen ? 'open' : ''}`}
+                    style={isActive ? { borderLeft: '3px solid var(--c-accent)', paddingLeft: 17 } : {}}
+                    onClick={() => toggleOpen(sem.id)}
+                  >
+                    {/* Name + meta */}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}>
+                        {sem.name}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-[22px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
-                          {fmtGPA(gpa)}
-                        </div>
-                        <button
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-(--radius-r1) text-(--c-text-4) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
-                          onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                        <ChevronRight size={14} className="text-(--c-text-4)" />
+                      <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
+                        {semCourses.length} courses · {credits} credits
+                        {isActive && <span style={{ color: 'var(--c-accent)', marginLeft: 6, fontWeight: 600 }}>· Active</span>}
                       </div>
                     </div>
-                  </Card>
-                </motion.div>
+
+                    {/* GPA — hidden on mobile */}
+                    <div className="c-bignum hidden sm:block" style={{ fontSize: 24, textAlign: 'right' }}>
+                      {fmtGPA(gpa)}
+                    </div>
+
+                    {/* Edit */}
+                    <button
+                      className="p-2 rounded-[10px] transition-all cursor-pointer"
+                      style={{ color: 'var(--c-text-3)' }}
+                      onClick={e => { e.stopPropagation(); setEditingSem(sem); }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.background = 'var(--c-surface-3)';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text-3)';
+                      }}
+                      title="Edit semester"
+                    >
+                      <IconEdit size={14} />
+                    </button>
+
+                    {/* Add course */}
+                    <button
+                      className="p-2 rounded-[10px] transition-all cursor-pointer"
+                      style={{ color: 'var(--c-accent)' }}
+                      onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.background = 'var(--c-accent-bg)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      }}
+                      title="Add course"
+                    >
+                      <IconPlus size={14} />
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      className="p-2 rounded-[10px] transition-all cursor-pointer"
+                      style={{ color: 'var(--c-text-4)' }}
+                      onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--c-grade-e)';
+                        (e.currentTarget as HTMLElement).style.background = 'var(--c-danger-bg)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--c-text-4)';
+                        (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      }}
+                    >
+                      <IconTrash size={14} />
+                    </button>
+
+                    {/* Chevron */}
+                    <IconChevronRight size={16} className="chev" />
+                  </div>
+
+                  {/* Accordion panel */}
+                  <div className={`c-acc-panel ${isOpen ? 'open' : ''}`}>
+                    <div className="inner">
+                      <div className="c-acc-courses">
+                        {semCourses.length === 0 ? (
+                          <div style={{ padding: '14px 20px', color: 'var(--c-text-4)', fontSize: 13 }}>
+                            No courses yet — tap + to add one
+                          </div>
+                        ) : (
+                          semCourses.map(course => {
+                            const cc = criteria.filter(cr => cr.courseId === course.id);
+                            const ce = entries.filter(e => cc.some(cr => cr.id === e.criterionId));
+                            const { pct } = courseRunningGrade(course, cc, ce);
+                            const letter = pct !== null ? letterFor(pct) : '—';
+
+                            return (
+                              <div
+                                key={course.id}
+                                className="c-acc-course"
+                                onClick={e => { e.stopPropagation(); navigate(`/courses/${course.id}`); }}
+                              >
+                                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minWidth: 0 }} className="truncate">
+                                  {cleanCourseName(course.name)}
+                                </span>
+                                <span style={{ fontSize: 13, fontFamily: 'var(--f-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--c-text-3)' }}>
+                                  {fmtPct(pct, 1)}
+                                </span>
+                                <GradePill letter={letter} size="sm" />
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
 
-      <NewSemesterModal open={showNew} onClose={() => setShowNew(false)} />
+      <SemesterSheet open={showNew} onClose={() => setShowNew(false)} />
+      <SemesterSheet open={!!editingSem} onClose={() => setEditingSem(undefined)} existing={editingSem} />
+      <CourseEditSheet
+        open={addCourseSemId !== null}
+        onClose={() => setAddCourseSemId(null)}
+        semesterId={addCourseSemId ?? undefined}
+        onSaved={newId => navigate(`/courses/${newId}`)}
+      />
       <ConfirmDialog
         open={deleteId !== null}
         onClose={() => setDeleteId(null)}

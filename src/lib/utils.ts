@@ -18,3 +18,7 @@ export function fmtPct(n: number | null, decimals = 1): string {
   if (n === null || isNaN(n)) return '—';
   return `${n.toFixed(decimals)}%`;
 }
+
+export function cleanCourseName(name: string): string {
+  return name.replace(/^\[[^\]]*\]\s*-?\s*/, '').trim();
+}

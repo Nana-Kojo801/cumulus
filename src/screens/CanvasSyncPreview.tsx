@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { IconCheck, IconChevronDown, IconChevronRight, IconAlertTriangle, IconLoader } from '@/components/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -8,11 +8,14 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { useCanvasConnection } from '@/hooks/useCanvasConnection';
-import { buildSyncPreview, executeSync } from '@/lib/canvas/sync';
+import { useCourses } from '@/hooks/useCourses';
+import { buildSyncPreview } from '@/lib/canvas/sync';
 import { CanvasApiError } from '@/lib/canvas/client';
 import { useToast } from '@/components/ui/Toast';
-import { cn } from '@/lib/utils';
+import { cn, cleanCourseName } from '@/lib/utils';
 import type { SyncPreview, SyncProgressEvent } from '@/lib/canvas/sync';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 type Phase = 'idle' | 'fetching' | 'preview' | 'importing' | 'done';
 
@@ -26,18 +29,19 @@ export function CanvasSyncPreview() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const connection = useCanvasConnection();
+  const courses = useCourses() ?? [];
+  const executeSyncMutation = useMutation(api.canvasSync.executeSync);
+  const updateLastSynced = useMutation(api.canvasConnections.updateLastSynced);
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [preview, setPreview] = useState<SyncPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
 
-  // User-controlled state for the preview
   const [credits, setCredits] = useState<Record<number, number>>({});
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [expandedCourses, setExpandedCourses] = useState<Set<number>>(new Set());
 
-  // Start sync automatically if connection exists and we're not in idle
   const runFetch = useCallback(async () => {
     if (!connection) return;
     setPhase('fetching');
@@ -45,21 +49,24 @@ export function CanvasSyncPreview() {
     setProgressSteps([]);
 
     try {
-      const result = await buildSyncPreview(connection, (e: SyncProgressEvent) => {
-        setProgressSteps(prev => {
-          const steps = [...prev];
-          const existing = steps.findIndex(s => s.label.startsWith(e.step));
-          const newStep = { label: e.message, done: e.done === e.total };
-          if (existing >= 0) {
-            steps[existing] = newStep;
-          } else {
-            steps.push(newStep);
-          }
-          return steps;
-        });
-      });
+      const result = await buildSyncPreview(
+        connection,
+        courses.map(c => ({ id: c.id, canvasId: c.canvasId })),
+        (e: SyncProgressEvent) => {
+          setProgressSteps(prev => {
+            const steps = [...prev];
+            const existing = steps.findIndex(s => s.label.startsWith(e.step));
+            const newStep = { label: e.message, done: e.done === e.total };
+            if (existing >= 0) {
+              steps[existing] = newStep;
+            } else {
+              steps.push(newStep);
+            }
+            return steps;
+          });
+        }
+      );
 
-      // Initialise user selections: all courses selected, credits default to 3
       const defaultCredits: Record<number, number> = {};
       const defaultSelected = new Set<number>();
       for (const sem of result.semesters) {
@@ -82,13 +89,20 @@ export function CanvasSyncPreview() {
       }
       setPhase('idle');
     }
-  }, [connection]);
+  }, [connection, courses]);
 
   async function handleConfirm() {
     if (!preview || !connection) return;
     setPhase('importing');
     try {
-      await executeSync(preview, credits, selected, connection);
+      await executeSyncMutation({
+        semesters: preview.semesters,
+        creditsByCanvasId: Object.entries(credits).map(([id, cr]) => ({ canvasId: +id, credits: cr })),
+        selectedCanvasIds: Array.from(selected),
+        connectionStudentName: connection.studentName,
+        connectionStudentId: connection.studentId,
+      });
+      await updateLastSynced({ lastSyncedAt: Date.now() });
       setPhase('done');
       toast('Canvas sync complete');
     } catch {
@@ -129,7 +143,7 @@ export function CanvasSyncPreview() {
   if (phase === 'done') {
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <Topbar breadcrumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Canvas Sync' }]} onMenuOpen={onMenuOpen} />
+        <Topbar title="Canvas Sync" back="Settings" onMenuOpen={onMenuOpen} />
         <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -137,7 +151,7 @@ export function CanvasSyncPreview() {
             transition={{ type: 'spring', bounce: 0.4 }}
             className="w-16 h-16 rounded-full bg-(--c-grade-a)/20 border border-(--c-grade-a)/30 flex items-center justify-center"
           >
-            <Check size={28} className="text-(--c-grade-a)" />
+            <IconCheck size={28} className="text-(--c-grade-a)" />
           </motion.div>
           <div className="text-center">
             <div className="text-[18px] font-medium text-(--c-text) mb-1">Sync complete</div>
@@ -151,17 +165,14 @@ export function CanvasSyncPreview() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Topbar
-        breadcrumbs={[{ label: 'Settings', to: '/settings' }, { label: 'Canvas Sync' }]}
-        onMenuOpen={onMenuOpen}
-      />
+      <Topbar title="Canvas Sync" back="Settings" onMenuOpen={onMenuOpen} />
 
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
 
         {/* Error */}
         {error && (
           <Card className="p-4 border-(--c-grade-e)/30 bg-(--c-grade-e)/8 flex items-start gap-3">
-            <AlertTriangle size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
+            <IconAlertTriangle size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="text-[13px] text-(--c-grade-e) font-medium mb-1">Sync failed</div>
               <div className="text-[13px] text-(--c-text-3)">{error}</div>
@@ -191,8 +202,8 @@ export function CanvasSyncPreview() {
                       className="flex items-center gap-2 text-[13px]"
                     >
                       {step.done
-                        ? <Check size={14} className="text-(--c-grade-a) shrink-0" />
-                        : <Loader2 size={14} className="text-(--c-accent) shrink-0 animate-spin" />
+                        ? <IconCheck size={14} className="text-(--c-grade-a) shrink-0" />
+                        : <IconLoader size={14} className="text-(--c-accent) shrink-0 animate-spin" />
                       }
                       <span className={step.done ? 'text-(--c-text-3)' : 'text-(--c-text-2)'}>
                         {step.label}
@@ -201,7 +212,7 @@ export function CanvasSyncPreview() {
                   ))}
                   {progressSteps.length === 0 && (
                     <div className="flex items-center gap-2 text-[13px] text-(--c-text-3)">
-                      <Loader2 size={14} className="text-(--c-accent) animate-spin" />
+                      <IconLoader size={14} className="text-(--c-accent) animate-spin" />
                       Connecting to Canvas…
                     </div>
                   )}
@@ -247,7 +258,7 @@ export function CanvasSyncPreview() {
             {preview.warnings.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
                 <Card className="p-4 border-(--c-grade-c)/30 bg-(--c-grade-c)/8 flex items-start gap-3">
-                  <AlertTriangle size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
+                  <IconAlertTriangle size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
                   <div>
                     <div className="text-[13px] font-medium text-(--c-grade-c) mb-1">
                       {preview.warnings.length === 1
@@ -307,13 +318,13 @@ export function CanvasSyncPreview() {
                                 : 'bg-(--c-surface-2) border-(--c-line-2)'
                             )}
                           >
-                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                            {isSelected && <IconCheck size={12} className="text-white" strokeWidth={3} />}
                           </button>
 
                           {/* Course info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[14px] font-medium text-(--c-text) truncate">{course.name}</span>
+                              <span className="text-[14px] font-medium text-(--c-text) truncate">{cleanCourseName(course.name)}</span>
                               {course.code && (
                                 <span className="text-[11px] font-mono text-(--c-text-3) bg-(--c-surface-2) px-1.5 py-0.5 rounded shrink-0">
                                   {course.code}
@@ -354,8 +365,8 @@ export function CanvasSyncPreview() {
                             className="p-1 text-(--c-text-4) hover:text-(--c-text) transition-colors cursor-pointer shrink-0"
                           >
                             {isExpanded
-                              ? <ChevronDown size={14} />
-                              : <ChevronRight size={14} />}
+                              ? <IconChevronDown size={14} />
+                              : <IconChevronRight size={14} />}
                           </button>
                         </div>
 
@@ -366,7 +377,7 @@ export function CanvasSyncPreview() {
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.18, ease: 'easeOut' }}
+                              transition={{ duration: 0.18, ease: 'easeOut' as const }}
                               className="overflow-hidden border-t border-(--c-line)"
                             >
                               <div className="bg-(--c-surface-2) px-4 py-3 flex flex-col gap-2">
@@ -418,7 +429,7 @@ export function CanvasSyncPreview() {
         {/* Importing */}
         {phase === 'importing' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 size={32} className="text-(--c-accent) animate-spin" />
+            <IconLoader size={32} className="text-(--c-accent) animate-spin" />
             <div className="text-[15px] text-(--c-text-2)">Saving to Cumulus…</div>
           </motion.div>
         )}

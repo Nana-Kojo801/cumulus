@@ -3,10 +3,11 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { db } from '@/db/schema';
 import type { Criterion } from '@/db/schema';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
 interface CriterionModalProps {
   open: boolean;
@@ -18,6 +19,9 @@ interface CriterionModalProps {
 
 export function CriterionModal({ open, onClose, courseId, existingCriteria, editing }: CriterionModalProps) {
   const { toast } = useToast();
+  const createCriterion = useMutation(api.criteria.create);
+  const updateCriterion = useMutation(api.criteria.update);
+
   const [name, setName] = useState('');
   const [weight, setWeight] = useState('');
 
@@ -51,11 +55,10 @@ export function CriterionModal({ open, onClose, courseId, existingCriteria, edit
     if (!name.trim() || !w || w <= 0) return;
 
     if (editing) {
-      await db.criteria.update(editing.id, { name: name.trim(), weight: w });
+      await updateCriterion({ id: editing.id, name: name.trim(), weight: w });
       toast('Criterion updated');
     } else {
-      await db.criteria.add({
-        id: crypto.randomUUID(),
+      await createCriterion({
         courseId,
         name: name.trim(),
         weight: w,

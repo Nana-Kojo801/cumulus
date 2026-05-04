@@ -1,27 +1,27 @@
 import { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Share2, Target } from 'lucide-react';
+import { useParams,useNavigate } from 'react-router-dom';
+import { IconPlus, IconEdit, IconTrash, IconTarget } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { GradePill } from '@/components/ui/GradePill';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-
 import { Chip } from '@/components/ui/Chip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CriterionModal } from '@/components/modals/CriterionModal';
 import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
 import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
-import { TemplateExportModal } from '@/components/modals/TemplateExportModal';
+import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { useCourse } from '@/hooks/useCourses';
 import { useSemester } from '@/hooks/useSemesters';
 import { useCriteriaByCourse } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { courseRunningGrade, criterionAverage, letterFor } from '@/lib/calculations';
 import { bandFor } from '@/lib/gradeScale';
-import { fmtPct } from '@/lib/utils';
-import { db } from '@/db/schema';
+import { fmtPct, cleanCourseName } from '@/lib/utils';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import type { Criterion } from '@/db/schema';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,8 @@ export function CourseDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const removeCriterion = useMutation(api.criteria.remove);
+
   const course = useCourse(id);
   const semester = useSemester(course?.semesterId);
   const criteria = useCriteriaByCourse(id) ?? [];
@@ -50,8 +52,8 @@ export function CourseDetail() {
   const [editingCriterion, setEditingCriterion] = useState<Criterion | undefined>();
   const [scoringCriterionId, setScoringCriterionId] = useState<string | null>(null);
   const [showWhatScore, setShowWhatScore] = useState(false);
-  const [showExport, setShowExport] = useState(false);
   const [deleteCritId, setDeleteCritId] = useState<string | null>(null);
+  const [showEditCourse, setShowEditCourse] = useState(false);
 
   const scoringCriterion = criteria.find(c => c.id === scoringCriterionId);
   const scoringCriterionRef = useRef<Criterion | undefined>(undefined);
@@ -60,7 +62,7 @@ export function CourseDetail() {
   if (!course) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <Topbar breadcrumbs={[{ label: 'Courses' }, { label: 'Loading…' }]} onMenuOpen={onMenuOpen} />
+        <Topbar title="Loading…" back="Semesters" onMenuOpen={onMenuOpen} />
         <div className="flex-1 flex items-center justify-center text-(--c-text-3)">Loading…</div>
       </div>
     );
@@ -89,44 +91,29 @@ export function CourseDetail() {
     : 'text-(--c-text)';
 
   async function handleDeleteCriterion(critId: string) {
-    const critEntries = allEntries.filter(e => e.criterionId === critId);
-    await db.transaction('rw', db.criteria, db.scoreEntries, async () => {
-      await db.scoreEntries.bulkDelete(critEntries.map(e => e.id));
-      await db.criteria.delete(critId);
-    });
+    await removeCriterion({ id: critId });
     toast('Criterion deleted');
   }
-
-  const breadcrumbs = [
-    { label: 'Semesters', to: '/semesters' },
-    ...(semester ? [{ label: semester.name, to: `/semesters/${semester.id}` }] : []),
-    { label: course.name },
-  ];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
-        breadcrumbs={breadcrumbs}
+        title={cleanCourseName(course.name)}
+        back={semester?.name ?? 'Semesters'}
         onMenuOpen={onMenuOpen}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowExport(true)}>
-              <Share2 size={14} /> Export Template
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
-              <Pencil size={14} /> Edit
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => setShowEditCourse(true)}>
+            <IconEdit size={14} /> Edit
+          </Button>
         }
       />
 
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-        {/* Header */}
         <div className="flex flex-col gap-3">
           <div className="flex items-start gap-3 flex-wrap">
             <div className="flex-1 min-w-0">
               <h1 className="text-[22px] font-medium text-(--c-text)" style={{ letterSpacing: '-0.018em' }}>
-                {course.name}
+                {cleanCourseName(course.name)}
               </h1>
             </div>
           </div>
@@ -146,7 +133,6 @@ export function CourseDetail() {
           </div>
         </div>
 
-        {/* Grade Forecast */}
         {criteria.length > 0 && (
           <Card className="p-4 flex flex-col gap-4">
             <h3 className="text-[14px] font-medium text-(--c-text)">Grade Forecast</h3>
@@ -164,22 +150,17 @@ export function CourseDetail() {
                 </div>
               </div>
             </div>
-            <Button
-              variant="default"
-              onClick={() => setShowWhatScore(true)}
-              className="self-start"
-            >
-              <Target size={14} /> What score do I need?
+            <Button variant="default" onClick={() => setShowWhatScore(true)} className="self-start">
+              <IconTarget size={14} /> What score do I need?
             </Button>
           </Card>
         )}
 
-        {/* Criteria */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-medium text-(--c-text)">Evaluation Criteria</h2>
             <Button variant="ghost" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
-              <Plus size={13} /> Add Criterion
+              <IconPlus size={13} /> Add Criterion
             </Button>
           </div>
 
@@ -187,7 +168,7 @@ export function CourseDetail() {
             <Card className="p-8 text-center">
               <p className="text-(--c-text-3) text-[14px] mb-3">No criteria yet. Add evaluation components to track your grade.</p>
               <Button variant="primary" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
-                <Plus size={14} /> Add Criterion
+                <IconPlus size={14} /> Add Criterion
               </Button>
             </Card>
           ) : (
@@ -202,10 +183,7 @@ export function CourseDetail() {
                 const borderColor = avgBand ? BAND_BORDER[avgBand] : undefined;
 
                 return (
-                  <div
-                    key={crit.id}
-                    style={borderColor ? { borderLeft: `3px solid ${borderColor}` } : {}}
-                  >
+                  <div key={crit.id} style={borderColor ? { borderLeft: `3px solid ${borderColor}` } : {}}>
                     {/* Mobile layout */}
                     <div className="sm:hidden px-4 py-3.5 flex flex-col gap-2.5">
                       <div className="flex items-center justify-between gap-2">
@@ -225,22 +203,17 @@ export function CourseDetail() {
                             className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
                             onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                           >
-                            <Pencil size={13} />
+                            <IconEdit size={13} />
                           </button>
                           <button
                             className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
                             onClick={() => setDeleteCritId(crit.id)}
                           >
-                            <Trash2 size={13} />
+                            <IconTrash size={13} />
                           </button>
                         </div>
                       </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setScoringCriterionId(crit.id)}
-                      >
+                      <Button variant="primary" size="sm" className="w-full" onClick={() => setScoringCriterionId(crit.id)}>
                         Score
                       </Button>
                     </div>
@@ -251,9 +224,7 @@ export function CourseDetail() {
                         <div className="flex items-center gap-2">
                           <span className="text-[14px] text-(--c-text) font-medium">{crit.name}</span>
                           <Chip variant="default" className="text-[11px]">{crit.weight}%</Chip>
-                          <span className="text-[12px] text-(--c-text-3)">
-                            {scored}/{critEntries.length} scored
-                          </span>
+                          <span className="text-[12px] text-(--c-text-3)">{scored}/{critEntries.length} scored</span>
                         </div>
                         <div className="flex items-center gap-4">
                           <ProgressBar value={avg ?? 0} className="w-24" />
@@ -266,24 +237,18 @@ export function CourseDetail() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => setScoringCriterionId(crit.id)}
-                        >
-                          Score
-                        </Button>
+                        <Button variant="default" size="sm" onClick={() => setScoringCriterionId(crit.id)}>Score</Button>
                         <button
                           className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
                           onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                         >
-                          <Pencil size={13} />
+                          <IconEdit size={13} />
                         </button>
                         <button
                           className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
                           onClick={() => setDeleteCritId(crit.id)}
                         >
-                          <Trash2 size={13} />
+                          <IconTrash size={13} />
                         </button>
                       </div>
                     </div>
@@ -299,10 +264,14 @@ export function CourseDetail() {
               {totalWeight}%{totalWeight === 100 ? ' ✓' : ''}
             </span>
           </div>
-
         </div>
-
       </div>
+
+      <CourseEditSheet
+        open={showEditCourse}
+        onClose={() => setShowEditCourse(false)}
+        courseId={id}
+      />
 
       <CriterionModal
         open={showCriterionModal}
@@ -328,13 +297,6 @@ export function CourseDetail() {
         course={course}
         criteria={criteria}
         entries={entries}
-      />
-
-      <TemplateExportModal
-        open={showExport}
-        onClose={() => setShowExport(false)}
-        course={course}
-        criteria={criteria}
       />
 
       <ConfirmDialog

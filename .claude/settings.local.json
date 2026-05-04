@@ -30,7 +30,18 @@
       "Bash(pnpm remove *)",
       "Bash(pnpm run *)",
       "Bash(pnpm approve-builds *)",
-      "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"require\\('path'\\); console.log\\('ok'\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(npx convex *)",
+      "Bash(node -e \"const m = require\\('./node_modules/convex/package.json'\\); console.log\\(m.version\\)\")",
+      "Bash(node -e \"import\\('convex/server'\\).then\\(m => console.log\\(Object.keys\\(m\\).slice\\(0,5\\)\\)\\).catch\\(e => console.error\\(e.message\\)\\)\")",
+      "Bash(node -e \"import\\('./convex/_generated/api.js'\\).then\\(m => console.log\\('api exports:', Object.keys\\(m\\)\\)\\).catch\\(e => console.error\\(e.message\\)\\)\")",
+      "Bash(node -e \"import\\('./node_modules/convex/package.json', { assert: { type: 'json' } }\\).then\\(m => { const exp = m.default.exports; console.log\\(Object.keys\\(exp\\).filter\\(k => k.includes\\('clerk'\\)\\)\\) }\\)\")",
+      "Bash(Remove-Item \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\src\\\\screens\\\\SSOCallback.tsx\")",
+      "PowerShell(Invoke-WebRequest -Uri \"https://api.anthropic.com/v1/design/h/E9EEdQkGSGmcUU4xFW0Mzw?open_file=Cumulus+-+Design+Canvas.html\" -OutFile \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\" -UseBasicParsing; Write-Output \"Download complete. File size: $\\(\\(Get-Item 'C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz'\\).Length\\) bytes\")",
+      "Bash(curl -L -o \"/c/Users/PC/Documents/Coding/Projects/cumulus/design-bundle.tar.gz\" \"https://api.anthropic.com/v1/design/h/E9EEdQkGSGmcUU4xFW0Mzw?open_file=Cumulus+-+Design+Canvas.html\" -v)",
+      "Bash(cp \"C:\\\\Users\\\\PC\\\\.claude\\\\projects\\\\c--Users-PC-Documents-Coding-Projects-cumulus\\\\6e3e30b6-2624-450a-b323-2e198c337e5c\\\\tool-results\\\\webfetch-1777859080973-4t60y8.bin\" \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\")",
+      "Bash(tar -xzf \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle.tar.gz\" -C \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\cumulus\\\\design-bundle\")"
     ]
   }
 }

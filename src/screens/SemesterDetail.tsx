@@ -1,25 +1,22 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, MoreVertical, Trash2, Upload } from 'lucide-react';
+import { IconPlus, IconTrash, IconChevronRight } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { GradePill } from '@/components/ui/GradePill';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Tag } from '@/components/ui/Tag';
 import { Chip } from '@/components/ui/Chip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { useSemester } from '@/hooks/useSemesters';
-import { useCoursesBySemester } from '@/hooks/useCourses';
+import { useCoursesBySemester, useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
-import { fmtGPA, fmtPct } from '@/lib/utils';
-import { db } from '@/db/schema';
+import { fmtGPA, fmtPct, cleanCourseName } from '@/lib/utils';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
-import { useCourses } from '@/hooks/useCourses';
-import { useSemesters } from '@/hooks/useSemesters';
 
 export function SemesterDetail() {
   const onMenuOpen = useMenuOpen();
@@ -27,36 +24,37 @@ export function SemesterDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showAddCourse, setShowAddCourse] = useState(false);
+
+  const removeCourse = useMutation(api.courses.remove);
+  const setSemesterStatus = useMutation(api.semesters.setStatus);
 
   const semester = useSemester(id);
   const courses = useCoursesBySemester(id);
   const allCriteria = useCriteria() ?? [];
   const allEntries = useScoreEntries() ?? [];
-
-  const criteria = allCriteria.filter(cr => courses.some(c => c.id === cr.courseId));
-  const entries = allEntries.filter(e => criteria.some(cr => cr.id === e.criterionId));
   const allCourses = useCourses() ?? [];
-  const semesters = useSemesters() ?? [];
 
   const { gpa, credits } = id
     ? semesterGPA(id, allCourses, allCriteria, allEntries)
     : { gpa: null, credits: 0 };
 
   async function handleDeleteCourse(courseId: string) {
-    const courseCriteria = allCriteria.filter(cr => cr.courseId === courseId);
-    const courseEntries = allEntries.filter(e => courseCriteria.some(cr => cr.id === e.criterionId));
-    await db.transaction('rw', db.courses, db.criteria, db.scoreEntries, async () => {
-      await db.scoreEntries.bulkDelete(courseEntries.map(e => e.id));
-      await db.criteria.bulkDelete(courseCriteria.map(cr => cr.id));
-      await db.courses.delete(courseId);
-    });
+    await removeCourse({ id: courseId });
     toast('Course deleted');
+  }
+
+  async function handleToggleStatus() {
+    if (!semester) return;
+    const next = semester.status === 'active' ? 'complete' : 'active';
+    await setSemesterStatus({ id: semester.id, status: next });
+    toast(next === 'active' ? 'Semester set as active' : 'Semester marked complete');
   }
 
   if (!semester) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <Topbar breadcrumbs={[{ label: 'Semesters', to: '/semesters' }, { label: 'Loading…' }]} onMenuOpen={onMenuOpen} />
+        <Topbar title="Loading…" back="Semesters" onMenuOpen={onMenuOpen} />
         <div className="flex-1 flex items-center justify-center text-(--c-text-3)">Loading…</div>
       </div>
     );
@@ -65,96 +63,110 @@ export function SemesterDetail() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
-        breadcrumbs={[{ label: 'Semesters', to: '/semesters' }, { label: semester.name }]}
+        title={semester.name}
+        back="Semesters"
         onMenuOpen={onMenuOpen}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/import?semester=${id}`)}>
-              <Upload size={14} /> Import Template
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
-              <Plus size={14} /> Add Course
-            </Button>
-          </div>
+          <Button variant="primary" size="sm" onClick={() => setShowAddCourse(true)}>
+            <IconPlus size={14} /> Add Course
+          </Button>
         }
       />
 
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-[22px] font-medium text-(--c-text)" style={{ letterSpacing: '-0.018em' }}>
-                {semester.name}
-              </h1>
-              <Chip variant={semester.status === 'active' ? 'accent' : 'default'}>
-                {semester.status === 'active' ? 'Active' : 'Complete'}
-              </Chip>
+        {/* Header row */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={handleToggleStatus} className="cursor-pointer">
+                <Chip variant={semester.status === 'active' ? 'accent' : 'default'}>
+                  {semester.status === 'active' ? 'Active' : 'Complete'}
+                </Chip>
+              </button>
+              <span style={{ fontSize: 13, color: 'var(--c-text-3)' }}>
+                {credits} credits · {courses.length} courses
+              </span>
             </div>
-            <div className="text-[13px] text-(--c-text-3)">{credits} credits · {courses.length} courses</div>
           </div>
-          <div className="ml-auto text-right">
-            <div className="text-[11px] uppercase tracking-[0.08em] text-(--c-text-3)">Semester GPA</div>
-            <div className="text-[36px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.028em' }}>
-              {fmtGPA(gpa)}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-text-4)', fontWeight: 700, marginBottom: 2 }}>
+              GPA
             </div>
+            <div className="c-bignum" style={{ fontSize: 36 }}>{fmtGPA(gpa)}</div>
           </div>
         </div>
 
-        {/* Courses grid */}
+        {/* Course list */}
         {courses.length === 0 ? (
-          <Card className="p-10 text-center">
-            <p className="text-(--c-text-3) text-[14px] mb-3">No courses yet.</p>
-            <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
-              <Plus size={14} /> Add Course
+          <div
+            style={{
+              padding: '60px 24px',
+              border: '1.5px dashed var(--c-line-2)',
+              borderRadius: 'var(--r-4)',
+              textAlign: 'center',
+              color: 'var(--c-text-3)',
+            }}
+          >
+            <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, color: 'var(--c-text-2)', marginBottom: 8 }}>
+              No courses yet
+            </div>
+            <p style={{ fontSize: 13, marginBottom: 18 }}>Add your first course to start tracking.</p>
+            <Button variant="primary" size="sm" onClick={() => setShowAddCourse(true)}>
+              <IconPlus size={14} /> Add Course
             </Button>
-          </Card>
+          </div>
         ) : (
-          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {courses.map(course => {
+          <div className="c-card overflow-hidden">
+            {courses.map((course, i) => {
               const courseCriteria = allCriteria.filter(cr => cr.courseId === course.id);
               const courseEntries = allEntries.filter(e =>
                 courseCriteria.some(cr => cr.id === e.criterionId)
               );
-              const { pct, weightCompleted } = courseRunningGrade(course, courseCriteria, courseEntries);
+              const { pct } = courseRunningGrade(course, courseCriteria, courseEntries);
               const letter = pct !== null ? letterFor(pct) : '—';
 
               return (
-                <Card
+                <div
                   key={course.id}
-                  className="overflow-hidden group cursor-pointer hover:bg-(--c-surface-2) transition-colors"
+                  className="flex items-center gap-3 px-5 py-4 hover:bg-(--c-surface-2) transition-colors cursor-pointer group"
+                  style={{ borderTop: i > 0 ? '1px solid var(--c-line)' : 'none' }}
                   onClick={() => navigate(`/courses/${course.id}`)}
                 >
-                  <div className="p-4 flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        {course.code && <Tag className="mb-1">{course.code}</Tag>}
-                        <div className="text-[14px] font-medium text-(--c-text) mt-1">{course.name}</div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {pct !== null && letter !== '—' && <GradePill letter={letter} size="sm" />}
-                        <button
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-all cursor-pointer"
-                          onClick={e => { e.stopPropagation(); setDeleteId(course.id); }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Chip>{course.credits} cr</Chip>
-                      <span className="text-[12px] text-(--c-text-3) font-mono tabular-nums">
-                        {fmtPct(pct, 1)}
-                      </span>
-                    </div>
-                    <ProgressBar value={weightCompleted} />
-                  </div>
-                </Card>
+                  {course.code && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-4)', fontFamily: 'var(--f-mono)', minWidth: 48, flexShrink: 0 }}>
+                      {course.code}
+                    </span>
+                  )}
+                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>
+                    {cleanCourseName(course.name)}
+                  </span>
+                  <span className="hidden sm:block shrink-0" style={{ fontSize: 12, color: 'var(--c-text-4)', fontFamily: 'var(--f-mono)' }}>
+                    {course.credits} cr
+                  </span>
+                  <span className="shrink-0" style={{ fontSize: 13, fontFamily: 'var(--f-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--c-text-3)', minWidth: 48, textAlign: 'right' }}>
+                    {fmtPct(pct, 1)}
+                  </span>
+                  {letter !== '—' ? <GradePill letter={letter} size="sm" /> : <span className="w-8 shrink-0" />}
+                  <button
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-all cursor-pointer shrink-0"
+                    onClick={e => { e.stopPropagation(); setDeleteId(course.id); }}
+                  >
+                    <IconTrash size={13} />
+                  </button>
+                  <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
+                </div>
               );
             })}
           </div>
         )}
       </div>
+
+      <CourseEditSheet
+        open={showAddCourse}
+        onClose={() => setShowAddCourse(false)}
+        semesterId={id}
+        onSaved={newId => navigate(`/courses/${newId}`)}
+      />
 
       <ConfirmDialog
         open={deleteId !== null}

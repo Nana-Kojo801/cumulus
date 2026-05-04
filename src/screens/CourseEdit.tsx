@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Minus, Plus } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { IconMinus, IconPlus } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
@@ -11,8 +10,10 @@ import { Label } from '@/components/ui/Label';
 import { Chip } from '@/components/ui/Chip';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourse } from '@/hooks/useCourses';
-import { db } from '@/db/schema';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
+import { cleanCourseName } from '@/lib/utils';
 
 export function CourseEdit() {
   const onMenuOpen = useMenuOpen();
@@ -21,6 +22,9 @@ export function CourseEdit() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isNew = !id;
+
+  const createCourse = useMutation(api.courses.create);
+  const updateCourse = useMutation(api.courses.update);
 
   const semesters = useSemesters() ?? [];
   const existingCourse = useCourse(id);
@@ -50,9 +54,7 @@ export function CourseEdit() {
   async function handleSave() {
     if (!name.trim()) return;
     if (isNew) {
-      const newId = uuidv4();
-      await db.courses.add({
-        id: newId,
+      const newId = await createCourse({
         semesterId,
         code: code.trim(),
         name: name.trim(),
@@ -62,7 +64,7 @@ export function CourseEdit() {
       toast('Course created');
       navigate(`/courses/${newId}`);
     } else {
-      await db.courses.update(id!, { name: name.trim(), code: code.trim(), credits, semesterId });
+      await updateCourse({ id: id!, name: name.trim(), code: code.trim(), credits, semesterId });
       toast('Course updated');
       navigate(`/courses/${id}`);
     }
@@ -73,13 +75,13 @@ export function CourseEdit() {
     return a.term - b.term;
   });
 
-  const breadcrumbs = isNew
-    ? [{ label: 'Semesters', to: '/semesters' }, { label: 'New Course' }]
-    : [{ label: 'Courses', to: `/courses/${id}` }, { label: 'Edit Course' }];
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Topbar breadcrumbs={breadcrumbs} onMenuOpen={onMenuOpen} />
+      <Topbar
+        title={isNew ? 'New Course' : 'Edit Course'}
+        back={isNew ? 'Semesters' : (existingCourse ? cleanCourseName(existingCourse.name) : 'Course')}
+        onMenuOpen={onMenuOpen}
+      />
       <div className="flex-1 overflow-y-auto p-5">
         <div className="max-w-lg mx-auto flex flex-col gap-5">
           <Card className="p-5 flex flex-col gap-4">
@@ -110,21 +112,20 @@ export function CourseEdit() {
                   onClick={() => setCredits(c => Math.max(1, c - 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
                 >
-                  <Minus size={14} />
+                  <IconMinus size={14} />
                 </button>
                 <span className="text-[22px] font-semibold tabular-nums text-(--c-text) w-8 text-center">{credits}</span>
                 <button
                   onClick={() => setCredits(c => Math.min(6, c + 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
                 >
-                  <Plus size={14} />
+                  <IconPlus size={14} />
                 </button>
                 <span className="text-[12px] text-(--c-text-3)">Typical Ashesi range: 1–4</span>
               </div>
             </div>
           </Card>
 
-          {/* Semester selector */}
           <div className="flex flex-col gap-2">
             <Label>Semester</Label>
             <div className="flex flex-col gap-1.5">

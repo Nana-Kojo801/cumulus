@@ -1,7 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import { canvasApi } from './client';
 import type { CanvasConnection } from '@/db/schema';
-import { db } from '@/db/schema';
 
 // ─── Preview data model ──────────────────────────────────────────────────────
 
@@ -75,6 +73,7 @@ function courseIsWeighted(totalWeight: number): boolean {
 
 export async function buildSyncPreview(
   connection: CanvasConnection,
+  existingCourses: Array<{ id: string; canvasId?: number }>,
   onProgress?: (e: SyncProgressEvent) => void
 ): Promise<SyncPreview> {
   onProgress?.({ step: 'verify', done: 0, total: 1, message: 'Verifying token…' });
@@ -85,13 +84,10 @@ export async function buildSyncPreview(
   const rawCourses = await canvasApi.getCourses(connection.token);
   onProgress?.({ step: 'courses', done: 1, total: 1, message: `Found ${rawCourses.length} courses` });
 
-  // Check which courses already exist in Cumulus by canvasId
-  const existingCourses = await db.courses.toArray();
   const existingByCanvasId = new Map(
-    existingCourses.filter(c => c.canvasId).map(c => [c.canvasId!, c])
+    existingCourses.filter(c => c.canvasId != null).map(c => [c.canvasId!, c])
   );
 
-  // Fetch assignment groups for all courses in parallel
   const total = rawCourses.length;
   let done = 0;
   const groupResults = await Promise.all(
@@ -108,16 +104,13 @@ export async function buildSyncPreview(
     })
   );
 
-  // Group courses by Canvas term
   const termMap = new Map<number, { termId: number; name: string; year: number; term: number; status: 'active' | 'complete'; courses: PreviewCourse[] }>();
-
   const warnings: SyncWarning[] = [];
 
   for (const { course, groups } of groupResults) {
     const term = course.term;
     if (!term) continue;
 
-    // Parse year/term from term name, fall back to 0/0 for unknown
     const parsed = parseAshesiTerm(term.name);
 
     if (!termMap.has(term.id)) {
@@ -132,12 +125,10 @@ export async function buildSyncPreview(
     }
     const semEntry = termMap.get(term.id)!;
 
-    // Mark semester as active if any course in it is currently running
     if (course.workflow_state === 'available') {
       semEntry.status = 'active';
     }
 
-    // Map assignment groups → criteria + entries
     const totalGroupWeight = groups.reduce((sum, g) => sum + (g.group_weight ?? 0), 0);
     const isWeighted = courseIsWeighted(totalGroupWeight);
 
@@ -156,12 +147,8 @@ export async function buildSyncPreview(
             if (sub && !sub.excused) {
               if (sub.workflow_state === 'graded' && sub.score !== null) {
                 score = sub.score;
-              } else if (sub.workflow_state === 'graded' && sub.score === null) {
-                score = null; // rare; treat as pending
               }
-              // unsubmitted → null (pending)
             }
-            // excused → skip entirely
             return sub?.excused ? null : {
               canvasAssignmentId: a.id,
               label: a.name,
@@ -193,12 +180,10 @@ export async function buildSyncPreview(
     semEntry.courses.push(previewCourse);
   }
 
-  // Sort semesters chronologically
   const semesters = Array.from(termMap.values()).sort((a, b) =>
     a.year !== b.year ? a.year - b.year : a.term - b.term
   );
 
-  // Ensure at most one active semester (the most recent one with available courses)
   const activeSems = semesters.filter(s => s.status === 'active');
   if (activeSems.length > 1) {
     for (let i = 0; i < activeSems.length - 1; i++) {
@@ -220,140 +205,4 @@ export async function buildSyncPreview(
   );
 
   return { semesters, warnings, totalCourses, totalCriteria, totalAssignments };
-}
-
-// ─── Execute sync (write to DB after user confirms) ──────────────────────────
-
-export async function executeSync(
-  preview: SyncPreview,
-  credits: Record<number, number>,
-  selected: Set<number>,
-  connection: CanvasConnection
-): Promise<void> {
-  await db.transaction(
-    'rw',
-    [db.semesters, db.courses, db.criteria, db.scoreEntries, db.canvasConnections],
-    async () => {
-      for (const sem of preview.semesters) {
-        const selectedCourses = sem.courses.filter(c => selected.has(c.canvasId));
-        if (selectedCourses.length === 0) continue;
-
-        // Find or create semester (match by name)
-        let cumSemId: string;
-        const existing = await db.semesters.filter(s => s.name === sem.name).first();
-        if (existing) {
-          cumSemId = existing.id;
-        } else {
-          // If creating an active semester, demote existing active one first
-          if (sem.status === 'active') {
-            await db.semesters.where('status').equals('active').modify({ status: 'complete' });
-          }
-          cumSemId = uuidv4();
-          await db.semesters.add({
-            id: cumSemId,
-            name: sem.name,
-            year: sem.year,
-            term: sem.term,
-            status: sem.status,
-            createdAt: Date.now(),
-          });
-        }
-
-        for (const course of selectedCourses) {
-          const courseCredits = credits[course.canvasId] ?? 3;
-
-          // Find or create course (match by canvasId)
-          let cumCourseId: string;
-          const existingCourse = await db.courses.where('canvasId').equals(course.canvasId).first();
-          if (existingCourse) {
-            cumCourseId = existingCourse.id;
-            await db.courses.update(existingCourse.id, {
-              name: course.name,
-              code: course.code,
-              credits: courseCredits,
-            });
-          } else {
-            cumCourseId = uuidv4();
-            await db.courses.add({
-              id: cumCourseId,
-              semesterId: cumSemId,
-              code: course.code,
-              name: course.name,
-              credits: courseCredits,
-              canvasId: course.canvasId,
-              createdAt: Date.now(),
-            });
-          }
-
-          // Get existing criteria for this course
-          const existingCriteria = await db.criteria
-            .where('courseId')
-            .equals(cumCourseId)
-            .toArray();
-
-          for (const criterion of course.criteria) {
-            let cumCritId: string;
-            const existingCrit = existingCriteria.find(
-              c => c.canvasGroupId === criterion.canvasGroupId
-            );
-
-            if (existingCrit) {
-              cumCritId = existingCrit.id;
-              await db.criteria.update(existingCrit.id, {
-                name: criterion.name,
-                weight: criterion.weight,
-                instanceCount: criterion.assignments.length,
-              });
-            } else {
-              cumCritId = uuidv4();
-              await db.criteria.add({
-                id: cumCritId,
-                courseId: cumCourseId,
-                name: criterion.name,
-                weight: criterion.weight,
-                instanceCount: criterion.assignments.length,
-                canvasGroupId: criterion.canvasGroupId,
-                createdAt: Date.now(),
-              });
-            }
-
-            for (const assignment of criterion.assignments) {
-              const existingEntry = await db.scoreEntries
-                .where('canvasAssignmentId')
-                .equals(assignment.canvasAssignmentId)
-                .first();
-
-              if (existingEntry) {
-                // Never overwrite manually edited entries
-                if (!existingEntry.manuallyEdited) {
-                  await db.scoreEntries.update(existingEntry.id, {
-                    score: assignment.score,
-                    label: assignment.label,
-                    total: assignment.total,
-                  });
-                }
-              } else {
-                await db.scoreEntries.add({
-                  id: uuidv4(),
-                  criterionId: cumCritId,
-                  label: assignment.label,
-                  score: assignment.score,
-                  total: assignment.total,
-                  canvasAssignmentId: assignment.canvasAssignmentId,
-                  manuallyEdited: false,
-                  createdAt: Date.now(),
-                });
-              }
-            }
-          }
-        }
-      }
-
-      // Update the canvas connection with sync timestamp
-      await db.canvasConnections.put({
-        ...connection,
-        lastSyncedAt: Date.now(),
-      });
-    }
-  );
 }

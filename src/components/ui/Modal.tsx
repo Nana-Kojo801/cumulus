@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { IconX } from '@/components/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +50,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
                   onClick={onClose}
                   className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-(--c-surface-2) text-(--c-text-3) hover:text-(--c-text) transition-all cursor-pointer"
                 >
-                  <X size={15} />
+                  <IconX size={15} />
                 </button>
               </div>
             )}

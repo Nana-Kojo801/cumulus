@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Cumulus — Design Canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body { background: oklch(0.13 0.012 250); }
+    .frame {
+      background: var(--c-bg);
+      overflow: hidden;
+      border-radius: 14px;
+      box-shadow: 0 0 0 1px var(--c-line-2), 0 30px 60px -30px oklch(0 0 0 / 0.6);
+    }
+    .frame > .c-app { height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="screens-1.jsx"></script>
+  <script type="text/babel" src="screens-2.jsx"></script>
+  <script type="text/babel" src="screens-3.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Locked to a single wide desktop viewport for the canvas.
+    const VP = { id: "wide", label: "Wide", w: 1600, h: 900, kind: "desktop" };
+    const VPContext = React.createContext(VP);
+
+    // Frame: render a fixed-route slice of the app
+    const FrameApp = ({ route, modal, theme: themeProp }) => {
+      const semesters = SEMESTERS;
+      const courses = COURSES;
+      const [r, setR] = useState(route);
+      const [m, setM] = useState(modal || null);
+      const [theme, setTheme] = useState(themeProp || "light");
+      const go = (next) => setR(next);
+
+      const crumbs = (() => {
+        if (r.name === "home") return [{ label: "Dashboard" }];
+        if (r.name === "semesters") return [{ label: "Dashboard" }, { label: "Semesters" }];
+        if (r.name === "semester") {
+          const s = semesters.find(x => x.id === r.id);
+          return [{ label: "Dashboard" }, { label: "Semesters" }, { label: s?.name }];
+        }
+        if (r.name === "course") {
+          const c = courses.find(x => x.id === r.id);
+          const s = semesters.find(x => x.id === c?.semesterId);
+          return [{ label: "Dashboard" }, { label: s?.name }, { label: `${c.code} · ${c.name}` }];
+        }
+        if (r.name === "simulator") return [{ label: "Dashboard" }, { label: "GPA Simulator" }];
+        if (r.name === "settings") return [{ label: "Dashboard" }, { label: "Settings" }];
+        return [{ label: "Dashboard" }];
+      })();
+
+      let main;
+      switch (r.name) {
+        case "home": main = <HomeScreen go={go} semesters={semesters} courses={courses}/>; break;
+        case "semesters": main = <SemestersScreen go={go} semesters={semesters} courses={courses} openModal={setM}/>; break;
+        case "semester": main = <SemesterScreen go={go} semesterId={r.id} semesters={semesters} courses={courses} openModal={setM}/>; break;
+        case "course": main = <CourseScreen go={go} courseId={r.id} courses={courses} semesters={semesters} openModal={setM}/>; break;
+        case "simulator": main = <SimulatorScreen courses={courses} semesters={semesters}/>; break;
+        case "settings": main = <SettingsScreen go={go} openModal={setM} theme={theme} setTheme={setTheme}/>; break;
+        default: main = <HomeScreen go={go} semesters={semesters} courses={courses}/>;
+      }
+
+      return (
+        <div className="c-app c-shell" data-theme={theme} style={{ position: "relative", height: "100%" }}>
+          <Sidebar route={r} go={go} semesters={semesters} courses={courses}/>
+          <div className="c-main">
+            <Topbar crumbs={crumbs} right={null}/>
+            <div className="c-page">{main}</div>
+          </div>
+          {m && (
+            <div className="c-sheet-mask" onClick={() => setM(null)}>
+              <div onClick={e => e.stopPropagation()} style={{ height: "100%" }}>
+                {m.kind === "score" && <ScoreEntryModal {...m} courses={courses} onClose={() => setM(null)}/>}
+                {m.kind === "needed" && <NeededModal {...m} courses={courses} onClose={() => setM(null)}/>}
+                {m.kind === "criteria" && <CriteriaModal {...m} courses={courses} onClose={() => setM(null)}/>}
+                {m.kind === "export" && <ExportModal {...m} courses={courses} onClose={() => setM(null)}/>}
+                {m.kind === "scale" && <GradeScaleModal onClose={() => setM(null)}/>}
+                {m.kind === "course-edit" && <CourseEditModal {...m} courseId={m.id} courses={courses} semesters={semesters} onClose={() => setM(null)}/>}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const Frame = ({ children, vpOverride }) => {
+      const ctx = React.useContext(VPContext);
+      const vp = vpOverride || ctx;
+      return (
+        <div className="frame" data-vp={vp.kind}
+             style={{ width: vp.w, height: vp.h }}>
+          {children}
+        </div>
+      );
+    };
+
+    const Canvas = () => (
+      <VPContext.Provider value={VP}>
+        <CanvasInner vp={VP}/>
+      </VPContext.Provider>
+    );
+
+    const CanvasInner = ({ vp }) => (
+      <DesignCanvas title="Cumulus" subtitle="Local-first GPA tracker for Ashesi">
+
+        <DCSection id="overview" title="Overview & dashboard">
+          <DCArtboard id="home" label="Home — Dashboard" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "home" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="semesters" label="Semesters — collapsed" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "semesters" }}/></Frame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="course" title="Course workspace">
+          <DCArtboard id="course-detail" label="Course detail — Database Systems" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co13" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="score-entry" label="Score entry · Quizzes" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co14" }} modal={{ kind: "score", courseId: "co14", criterionId: COURSES.find(c=>c.id==="co14").criteria[0].id }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="criteria" label="Edit evaluation criteria" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co13" }} modal={{ kind: "criteria", courseId: "co13" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="course-form" label="Add / edit course (sheet)" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "semesters" }} modal={{ kind: "course-edit", semesterId: "s4" }}/></Frame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="forecasting" title="Forecasting & simulation">
+          <DCArtboard id="needed" label="What score do I need? — reachable" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co13" }} modal={{ kind: "needed", courseId: "co13" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="needed-impossible" label="What score do I need? — impossible" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co11" }} modal={{ kind: "needed", courseId: "co11" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="simulator" label="GPA target simulator" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "simulator" }}/></Frame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="sharing" title="Sharing & system">
+          <DCArtboard id="export" label="Export template — QR" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "course", id: "co13" }} modal={{ kind: "export", courseId: "co13" }}/></Frame>
+          </DCArtboard>
+          <DCArtboard id="settings" label="Settings — light" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "settings" }} theme="light"/></Frame>
+          </DCArtboard>
+          <DCArtboard id="settings-dark" label="Settings — dark mode" width={vp.w} height={vp.h}>
+            <Frame><FrameApp route={{ name: "settings" }} theme="dark"/></Frame>
+          </DCArtboard>
+        </DCSection>
+
+      </DesignCanvas>
+    );
+
+    const mount = () => {
+      if (!window.App && !window.HomeScreen) return setTimeout(mount, 30);
+      ReactDOM.createRoot(document.getElementById("root")).render(<Canvas/>);
+    };
+    mount();
+  </script>
+</body>
+</html>

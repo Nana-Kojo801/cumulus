@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Cumulus — Prototype</title>
+  <meta name="viewport" content="width=1280"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    html, body, #root { height: 100%; }
+    body { background: var(--c-bg); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="screens-1.jsx"></script>
+  <script type="text/babel" src="screens-2.jsx"></script>
+  <script type="text/babel" src="screens-3.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+  <script type="text/babel">
+    // Tweakable defaults — host can rewrite this JSON block on disk
+    const TWEAKS = /*EDITMODE-BEGIN*/{
+      "accent": "sky",
+      "density": "regular",
+      "displayFont": "serif",
+      "showGrid": true
+    }/*EDITMODE-END*/;
+
+    const ACCENTS = {
+      sky:    { c: "oklch(0.82 0.09 230)", c2: "oklch(0.72 0.11 230)", bg: "oklch(0.82 0.09 230 / 0.12)", bd: "oklch(0.82 0.09 230 / 0.25)" },
+      mint:   { c: "oklch(0.84 0.1 165)",  c2: "oklch(0.74 0.12 165)", bg: "oklch(0.84 0.1 165 / 0.12)",  bd: "oklch(0.84 0.1 165 / 0.25)" },
+      amber:  { c: "oklch(0.84 0.12 80)",  c2: "oklch(0.74 0.14 80)",  bg: "oklch(0.84 0.12 80 / 0.12)",  bd: "oklch(0.84 0.12 80 / 0.25)" },
+      lilac:  { c: "oklch(0.78 0.1 300)",  c2: "oklch(0.68 0.12 300)", bg: "oklch(0.78 0.1 300 / 0.12)",  bd: "oklch(0.78 0.1 300 / 0.25)" },
+    };
+
+    const TweakedApp = () => {
+      const [t, setTweak] = useTweaks(TWEAKS);
+      React.useEffect(() => {
+        const r = document.documentElement.style;
+        const a = ACCENTS[t.accent] || ACCENTS.sky;
+        r.setProperty("--c-accent", a.c);
+        r.setProperty("--c-accent-2", a.c2);
+        r.setProperty("--c-accent-bg", a.bg);
+        document.body.style.setProperty("--density", t.density);
+        document.body.classList.toggle("tw-compact", t.density === "compact");
+        document.body.classList.toggle("tw-roomy", t.density === "roomy");
+        document.body.classList.toggle("tw-display-sans", t.displayFont === "sans");
+        document.body.classList.toggle("tw-no-grid", !t.showGrid);
+      }, [t]);
+
+      return (
+        <>
+          <window.App/>
+          <TweaksPanel title="Tweaks">
+            <TweakSection title="Accent">
+              <TweakRadio value={t.accent} onChange={v => setTweak("accent", v)}
+                          options={[{value:"sky",label:"Sky"},{value:"mint",label:"Mint"},{value:"amber",label:"Amber"},{value:"lilac",label:"Lilac"}]}/>
+            </TweakSection>
+            <TweakSection title="Density">
+              <TweakRadio value={t.density} onChange={v => setTweak("density", v)}
+                          options={[{value:"compact",label:"Compact"},{value:"regular",label:"Regular"},{value:"roomy",label:"Roomy"}]}/>
+            </TweakSection>
+            <TweakSection title="Display weight">
+              <TweakRadio value={t.displayFont} onChange={v => setTweak("displayFont", v)}
+                          options={[{value:"serif",label:"Editorial"},{value:"sans",label:"Tight"}]}/>
+            </TweakSection>
+            <TweakSection title="Background">
+              <TweakToggle label="Show grid pattern" value={t.showGrid} onChange={v => setTweak("showGrid", v)}/>
+            </TweakSection>
+          </TweaksPanel>
+        </>
+      );
+    };
+    window.TweakedApp = TweakedApp;
+  </script>
+  <script type="text/babel">
+    const mount = () => {
+      if (!window.TweakedApp) return setTimeout(mount, 30);
+      ReactDOM.createRoot(document.getElementById("root")).render(<window.TweakedApp/>);
+    };
+    mount();
+  </script>
+</body>
+</html>

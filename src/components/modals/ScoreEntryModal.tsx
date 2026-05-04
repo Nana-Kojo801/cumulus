@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Trash2, Plus } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect, useRef } from 'react';
+import { IconTrash, IconPlus } from '@/components/icons';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
-
 import { Chip } from '@/components/ui/Chip';
-import { db } from '@/db/schema';
 import type { Criterion, ScoreEntry, Course } from '@/db/schema';
 import { criterionAverage } from '@/lib/calculations';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
+import { useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
 interface ScoreEntryModalProps {
   open: boolean;
@@ -28,9 +27,11 @@ interface LocalEntry {
   isNew?: boolean;
 }
 
-export function ScoreEntryModal({ open, onClose, criterion, course, entries }: ScoreEntryModalProps) {
+export function ScoreEntryModal({ open, onClose, criterion, course: _course, entries }: ScoreEntryModalProps) {
   const { toast } = useToast();
+  const saveAll = useMutation(api.scoreEntries.saveAll);
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalEntries(
@@ -51,13 +52,16 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
   function addEntry() {
     const newCount = localEntries.length + 1;
     setLocalEntries(prev => [...prev, {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       criterionId: criterion.id,
       label: `${criterion.name} ${newCount}`,
       score: '',
       total: '100',
       isNew: true,
     }]);
+    requestAnimationFrame(() => {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    });
   }
 
   function removeEntry(id: string) {
@@ -65,37 +69,26 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
   }
 
   async function handleSave() {
-    await db.transaction('rw', db.scoreEntries, db.criteria, async () => {
-      for (const le of localEntries) {
-        const scoreVal = le.score === '' ? null : parseFloat(le.score);
-        const totalVal = parseFloat(le.total) || 100;
+    const existingIds = new Set(entries.map(e => e.id));
+    const toCreate = localEntries
+      .filter(le => le.isNew)
+      .map(le => ({
+        label: le.label,
+        score: le.score === '' ? null : parseFloat(le.score),
+        total: parseFloat(le.total) || 100,
+      }));
+    const toUpdate = localEntries
+      .filter(le => !le.isNew && existingIds.has(le.id))
+      .map(le => ({
+        id: le.id,
+        label: le.label,
+        score: le.score === '' ? null : parseFloat(le.score),
+        total: parseFloat(le.total) || 100,
+      }));
+    const currentIds = new Set(localEntries.map(le => le.id));
+    const toDelete = entries.filter(e => !currentIds.has(e.id)).map(e => e.id);
 
-        if (le.isNew) {
-          await db.scoreEntries.add({
-            id: le.id,
-            criterionId: le.criterionId,
-            label: le.label,
-            score: scoreVal,
-            total: totalVal,
-            manuallyEdited: true,
-            createdAt: Date.now(),
-          });
-        } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await db.scoreEntries.where('id').equals(le.id).modify((e: any) => {
-            e.label = le.label;
-            e.score = scoreVal;
-            e.total = totalVal;
-            e.manuallyEdited = true;
-            delete e.entryWeight;
-          });
-        }
-      }
-      const existingIds = new Set(localEntries.map(e => e.id));
-      const toDelete = entries.filter(e => !existingIds.has(e.id)).map(e => e.id);
-      if (toDelete.length > 0) await db.scoreEntries.bulkDelete(toDelete);
-      await db.criteria.update(criterion.id, { instanceCount: localEntries.length });
-    });
+    await saveAll({ criterionId: criterion.id, toCreate, toUpdate, toDelete });
     toast('Scores saved');
     onClose();
   }
@@ -113,56 +106,72 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
   const contribution = avg !== null ? avg * criterion.weight / 100 : null;
 
   return (
-    <Sheet open={open} onClose={onClose}>
-      <div className="flex flex-col">
-        {/* Header */}
-        <div className="px-5 pt-4 pb-3 border-b border-(--c-line) flex items-center gap-3 shrink-0">
-          <span className="text-[15px] font-medium text-(--c-text) flex-1">{criterion.name}</span>
-          <Chip variant="accent">{criterion.weight}% of grade</Chip>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-(--c-surface-2) text-(--c-text-3) cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
+    <Sheet open={open} onClose={onClose} fullHeight>
+      {/* Header — fixed */}
+      <div className="px-5 pt-4 pb-3 border-b border-(--c-line) flex items-center gap-3 shrink-0">
+        <span className="text-[15px] font-semibold text-(--c-text) flex-1 min-w-0 truncate">{criterion.name}</span>
+        <Chip variant="accent" className="shrink-0">{criterion.weight}%</Chip>
+        <button
+          onClick={onClose}
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-(--c-surface-2) text-(--c-text-3) cursor-pointer shrink-0"
+        >
+          ✕
+        </button>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 p-4 border-b border-(--c-line)">
-          <StatCard label="Average so far" value={avg !== null ? `${avg.toFixed(1)}%` : '—'} />
-          <StatCard
-            label="Contribution"
-            value={contribution !== null ? `${contribution.toFixed(1)} / ${criterion.weight}pts` : '—'}
-          />
-          <StatCard label="Completed" value={`${scored.length} / ${localEntries.length}`} />
-        </div>
+      {/* Stats — fixed */}
+      <div className="grid grid-cols-3 gap-3 p-4 border-b border-(--c-line) shrink-0">
+        <StatCard label="Average" value={avg !== null ? `${avg.toFixed(1)}%` : '—'} />
+        <StatCard
+          label="Contribution"
+          value={contribution !== null ? `${contribution.toFixed(1)}/${criterion.weight}` : '—'}
+        />
+        <StatCard label="Scored" value={`${scored.length}/${localEntries.length}`} />
+      </div>
 
-        <div className="px-4 pt-3 pb-1">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-(--c-text-3)">Instances</span>
-        </div>
+      {/* Instances label + Add button — fixed */}
+      <div className="px-4 pt-3 pb-2 shrink-0 flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-[0.08em] font-bold text-(--c-text-4)">
+          Instances
+        </span>
+        <Button variant="ghost" size="sm" onClick={addEntry}>
+          <IconPlus size={13} /> Add instance
+        </Button>
+      </div>
 
-        {/* Entries list */}
-        <div className="px-4 pb-1 flex flex-col gap-1 max-h-[40vh] overflow-y-auto">
-          {localEntries.map((entry, idx) => {
-            const isPending = entry.score === '';
-            const scoreVal = entry.score !== '' ? parseFloat(entry.score) : null;
-            const totalVal = parseFloat(entry.total) || 100;
-            const pct = scoreVal !== null ? (scoreVal / totalVal) * 100 : null;
+      {/* Entries list — scrollable, fills remaining height */}
+      <div ref={listRef} className="flex-1 overflow-y-auto min-h-0 px-4 pb-2 flex flex-col gap-1.5">
+        {localEntries.map((entry, idx) => {
+          const isPending = entry.score === '';
+          const scoreVal = entry.score !== '' ? parseFloat(entry.score) : null;
+          const totalVal = parseFloat(entry.total) || 100;
+          const pct = scoreVal !== null ? (scoreVal / totalVal) * 100 : null;
 
-            return (
-              <div
-                key={entry.id}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-(--radius-r2)',
-                  isPending ? 'pending-stripe' : 'bg-(--c-surface-2)'
-                )}
-              >
+          return (
+            <div
+              key={entry.id}
+              className={cn(
+                'px-3 py-2.5 rounded-(--radius-r2) flex flex-col gap-1.5',
+                isPending ? 'pending-stripe' : 'bg-(--c-surface-2)'
+              )}
+            >
+              {/* Name row */}
+              <div className="flex items-center gap-2">
                 <span className="font-mono text-[11px] text-(--c-text-4) w-5 text-right shrink-0">{idx + 1}</span>
                 <input
-                  className="flex-1 bg-transparent text-[13px] text-(--c-text) outline-none min-w-0"
+                  className="flex-1 bg-transparent text-[13px] font-semibold text-(--c-text) outline-none min-w-0"
                   value={entry.label}
                   onChange={e => updateEntry(entry.id, 'label', e.target.value)}
                 />
+                <button
+                  onClick={() => removeEntry(entry.id)}
+                  className="p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-colors cursor-pointer shrink-0"
+                >
+                  <IconTrash size={13} />
+                </button>
+              </div>
+              {/* Score row */}
+              <div className="flex items-center gap-2 pl-7">
                 <input
                   type="number"
                   className="w-16 bg-(--c-bg-2) border border-(--c-line) rounded-(--radius-r1) px-2 py-1 text-[13px] font-mono text-right text-(--c-text) outline-none focus:border-(--c-accent)"
@@ -177,31 +186,24 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
                   value={entry.total}
                   onChange={e => updateEntry(entry.id, 'total', e.target.value)}
                 />
-                <span className="w-12 text-[12px] font-mono tabular-nums text-(--c-text-3) text-right">
+                <span className="flex-1 text-[12px] font-mono tabular-nums text-(--c-text-3) text-right">
                   {pct !== null ? `${pct.toFixed(0)}%` : '—'}
                 </span>
-                <button
-                  onClick={() => removeEntry(entry.id)}
-                  className="p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-colors cursor-pointer"
-                >
-                  <Trash2 size={13} />
-                </button>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+        {localEntries.length === 0 && (
+          <div className="py-8 text-center text-[13px] text-(--c-text-4)">
+            No instances yet. Tap "Add instance" to start.
+          </div>
+        )}
+      </div>
 
-        <div className="px-4 pb-2">
-          <Button variant="ghost" size="sm" onClick={addEntry}>
-            <Plus size={13} /> Add instance
-          </Button>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-2 px-5 py-4 border-t border-(--c-line)">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>Save</Button>
-        </div>
+      {/* Footer — fixed */}
+      <div className="shrink-0 border-t border-(--c-line) flex justify-end gap-2 px-5 py-4">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave}>Save</Button>
       </div>
     </Sheet>
   );
@@ -210,8 +212,8 @@ export function ScoreEntryModal({ open, onClose, criterion, course, entries }: S
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-(--c-surface-2) rounded-(--radius-r2) p-3 flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-3)">{label}</span>
-      <span className="text-[15px] font-semibold tabular-nums text-(--c-text)">{value}</span>
+      <span className="text-[10px] uppercase tracking-[0.08em] text-(--c-text-4) font-bold">{label}</span>
+      <span className="text-[14px] font-semibold tabular-nums text-(--c-text)">{value}</span>
     </div>
   );
 }

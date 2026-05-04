@@ -1,5 +1,5 @@
 import { useState, useCallback, createContext, useContext, type ReactNode } from 'react';
-import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { IconX, IconCheckCircle, IconAlertCircle, IconInfo } from '@/components/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +61,7 @@ interface ToastProps extends ToastItem {
 }
 
 export function Toast({ message, type, onDismiss }: ToastProps) {
-  const Icon = type === 'success' ? CheckCircle : type === 'error' ? AlertCircle : Info;
+  const Icon = type === 'success' ? IconCheckCircle : type === 'error' ? IconAlertCircle : IconInfo;
   return (
     <div className={cn(
       'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-(--radius-r3) border shadow-lg min-w-65 max-w-95',
@@ -77,7 +77,7 @@ export function Toast({ message, type, onDismiss }: ToastProps) {
       />
       <span className="text-[14px] flex-1">{message}</span>
       <button onClick={onDismiss} className="text-(--c-text-3) hover:text-(--c-text) transition-colors cursor-pointer">
-        <X size={14} />
+        <IconX size={14} />
       </button>
     </div>
   );

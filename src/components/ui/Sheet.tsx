@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { IconX } from '@/components/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -9,9 +10,10 @@ interface SheetProps {
   title?: string;
   children: ReactNode;
   className?: string;
+  fullHeight?: boolean;
 }
 
-export function Sheet({ open, onClose, title, children, className }: SheetProps) {
+export function Sheet({ open, onClose, title, children, className, fullHeight }: SheetProps) {
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -19,10 +21,10 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  return (
+  const content = (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-200 flex justify-end">
           <motion.div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -33,7 +35,7 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
           />
           <motion.div
             className={cn(
-              'relative w-full sm:w-[500px] h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-2xl flex flex-col',
+              'relative w-full sm:w-[500px] h-full bg-(--c-surface) border-l border-(--c-line-2) shadow-2xl flex flex-col overflow-hidden',
               className
             )}
             initial={{ x: '100%' }}
@@ -48,14 +50,16 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
                   onClick={onClose}
                   className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-(--c-surface-2) text-(--c-text-3) hover:text-(--c-text) transition-all cursor-pointer"
                 >
-                  <X size={15} />
+                  <IconX size={15} />
                 </button>
               </div>
             )}
-            <div className="overflow-y-auto flex-1">{children}</div>
+            <div className={cn('flex-1 min-h-0', fullHeight ? 'flex flex-col' : 'overflow-y-auto')}>{children}</div>
           </motion.div>
         </div>
       )}
     </AnimatePresence>
   );
+
+  return createPortal(content, document.body);
 }
