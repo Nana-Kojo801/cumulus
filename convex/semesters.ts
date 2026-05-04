@@ -2,10 +2,21 @@ import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 
+async function requireUserId(ctx: { auth: { getUserIdentity(): Promise<{ tokenIdentifier: string } | null> } }) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+  return identity.tokenIdentifier;
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return ctx.db.query('semesters').withIndex('by_createdAt').collect();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    return ctx.db
+      .query('semesters')
+      .withIndex('by_userId_createdAt', q => q.eq('userId', identity.tokenIdentifier))
+      .collect();
   },
 });
 
@@ -19,9 +30,13 @@ export const get = query({
 export const getActive = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
     return ctx.db
       .query('semesters')
-      .withIndex('by_status', q => q.eq('status', 'active'))
+      .withIndex('by_userId_status', q =>
+        q.eq('userId', identity.tokenIdentifier).eq('status', 'active')
+      )
       .first();
   },
 });
@@ -35,14 +50,16 @@ export const create = mutation({
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     if (args.status === 'active') {
       const active = await ctx.db
         .query('semesters')
-        .withIndex('by_status', q => q.eq('status', 'active'))
+        .withIndex('by_userId_status', q => q.eq('userId', userId).eq('status', 'active'))
         .first();
       if (active) await ctx.db.patch(active._id, { status: 'complete' });
     }
     return ctx.db.insert('semesters', {
+      userId,
       name: args.name,
       status: args.status,
       createdAt: args.createdAt,
@@ -61,11 +78,12 @@ export const update = mutation({
     status: v.union(v.literal('active'), v.literal('complete')),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const id = args.id as Id<'semesters'>;
     if (args.status === 'active') {
       const current = await ctx.db
         .query('semesters')
-        .withIndex('by_status', q => q.eq('status', 'active'))
+        .withIndex('by_userId_status', q => q.eq('userId', userId).eq('status', 'active'))
         .first();
       if (current && current._id !== id) {
         await ctx.db.patch(current._id, { status: 'complete' });
@@ -86,11 +104,12 @@ export const setStatus = mutation({
     status: v.union(v.literal('active'), v.literal('complete')),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const id = args.id as Id<'semesters'>;
     if (args.status === 'active') {
       const current = await ctx.db
         .query('semesters')
-        .withIndex('by_status', q => q.eq('status', 'active'))
+        .withIndex('by_userId_status', q => q.eq('userId', userId).eq('status', 'active'))
         .first();
       if (current && current._id !== id) {
         await ctx.db.patch(current._id, { status: 'complete' });
@@ -103,6 +122,7 @@ export const setStatus = mutation({
 export const remove = mutation({
   args: { id: v.string() },
   handler: async (ctx, args) => {
+    await requireUserId(ctx);
     const id = args.id as Id<'semesters'>;
     const courses = await ctx.db
       .query('courses')

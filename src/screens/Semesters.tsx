@@ -13,11 +13,11 @@ import { GradePill } from '@/components/ui/GradePill';
 import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourses } from '@/hooks/useCourses';
-import { cleanCourseName } from '@/lib/utils';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
-import { fmtGPA, fmtPct } from '@/lib/utils';
+import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
@@ -133,6 +133,7 @@ export function Semesters() {
   const onMenuOpen = useMenuOpen();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { showShortNames } = useDisplayPrefs();
   const [showNew, setShowNew] = useState(false);
   const [editingSem, setEditingSem] = useState<Semester | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -346,7 +347,7 @@ export function Semesters() {
                                 onClick={e => { e.stopPropagation(); navigate(`/courses/${course.id}`); }}
                               >
                                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minWidth: 0 }} className="truncate">
-                                  {cleanCourseName(course.name)}
+                                  {displayCourseName(course, showShortNames)}
                                 </span>
                                 <span style={{ fontSize: 13, fontFamily: 'var(--f-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--c-text-3)' }}>
                                   {fmtPct(pct, 1)}

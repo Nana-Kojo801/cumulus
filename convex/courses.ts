@@ -2,10 +2,21 @@ import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 
+async function requireUserId(ctx: { auth: { getUserIdentity(): Promise<{ tokenIdentifier: string } | null> } }) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+  return identity.tokenIdentifier;
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return ctx.db.query('courses').withIndex('by_createdAt').collect();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    return ctx.db
+      .query('courses')
+      .withIndex('by_userId_createdAt', q => q.eq('userId', identity.tokenIdentifier))
+      .collect();
   },
 });
 
@@ -37,7 +48,9 @@ export const create = mutation({
     createdAt: v.number(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     return ctx.db.insert('courses', {
+      userId,
       ...args,
       semesterId: args.semesterId as Id<'semesters'>,
     });

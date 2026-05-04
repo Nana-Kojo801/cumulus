@@ -5,7 +5,8 @@ import { useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, courseRunningGrade } from '@/lib/calculations';
-import { fmtGPA, cleanCourseName } from '@/lib/utils';
+import { fmtGPA, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import type { Course } from '@/db/schema';
 import {
   IconHome, IconCalendar, IconBarChart, IconSliders, IconX,
@@ -55,6 +56,7 @@ function CourseNavItem({
   grade: string;
   onClick?: () => void;
 }) {
+  const { showShortNames } = useDisplayPrefs();
   return (
     <NavLink to={`/courses/${course.id}`} onClick={onClick} className="block">
       {({ isActive }) => (
@@ -70,7 +72,7 @@ function CourseNavItem({
           )}
           {!collapsed ? (
             <>
-              <span className="text-[13px] flex-1 truncate">{cleanCourseName(course.name)}</span>
+              <span className="text-[13px] flex-1 truncate">{displayCourseName(course, showShortNames)}</span>
               <span className="text-[12px] font-mono tabular-nums text-(--c-text-4) shrink-0">{grade}</span>
             </>
           ) : (

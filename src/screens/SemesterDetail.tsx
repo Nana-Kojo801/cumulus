@@ -12,7 +12,8 @@ import { useCoursesBySemester, useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
-import { fmtGPA, fmtPct, cleanCourseName } from '@/lib/utils';
+import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
@@ -21,6 +22,7 @@ export function SemesterDetail() {
   const onMenuOpen = useMenuOpen();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showShortNames } = useDisplayPrefs();
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -136,7 +138,7 @@ export function SemesterDetail() {
                     </span>
                   )}
                   <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>
-                    {cleanCourseName(course.name)}
+                    {displayCourseName(course, showShortNames)}
                   </span>
                   <span className="hidden sm:block shrink-0" style={{ fontSize: 12, color: 'var(--c-text-4)', fontFamily: 'var(--f-mono)' }}>
                     {course.credits} cr

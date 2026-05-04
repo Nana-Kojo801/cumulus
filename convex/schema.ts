@@ -3,17 +3,22 @@ import { v } from 'convex/values';
 
 export default defineSchema({
   semesters: defineTable({
+    userId: v.string(),
     name: v.string(),
     year: v.optional(v.number()),
     term: v.optional(v.number()),
     status: v.union(v.literal('complete'), v.literal('active')),
     createdAt: v.number(),
   })
+    .index('by_userId', ['userId'])
+    .index('by_userId_status', ['userId', 'status'])
+    .index('by_userId_createdAt', ['userId', 'createdAt'])
     .index('by_status', ['status'])
     .index('by_createdAt', ['createdAt'])
     .index('by_name', ['name']),
 
   courses: defineTable({
+    userId: v.string(),
     semesterId: v.id('semesters'),
     code: v.string(),
     name: v.string(),
@@ -22,6 +27,8 @@ export default defineSchema({
     canvasId: v.optional(v.number()),
     createdAt: v.number(),
   })
+    .index('by_userId', ['userId'])
+    .index('by_userId_createdAt', ['userId', 'createdAt'])
     .index('by_semesterId', ['semesterId'])
     .index('by_canvasId', ['canvasId'])
     .index('by_createdAt', ['createdAt']),
@@ -51,13 +58,14 @@ export default defineSchema({
     .index('by_createdAt', ['createdAt']),
 
   canvasConnections: defineTable({
+    userId: v.string(),
     domain: v.string(),
     token: v.string(),
     connectedAt: v.number(),
     studentName: v.string(),
     studentId: v.number(),
     lastSyncedAt: v.optional(v.number()),
-  }),
+  }).index('by_userId', ['userId']),
 
   users: defineTable({
     name: v.string(),

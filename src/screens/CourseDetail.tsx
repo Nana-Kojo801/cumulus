@@ -19,7 +19,8 @@ import { useCriteriaByCourse } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { courseRunningGrade, criterionAverage, letterFor } from '@/lib/calculations';
 import { bandFor } from '@/lib/gradeScale';
-import { fmtPct, cleanCourseName } from '@/lib/utils';
+import { fmtPct, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Criterion } from '@/db/schema';
@@ -38,6 +39,7 @@ export function CourseDetail() {
   const onMenuOpen = useMenuOpen();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showShortNames } = useDisplayPrefs();
   const { toast } = useToast();
 
   const removeCriterion = useMutation(api.criteria.remove);
@@ -105,7 +107,7 @@ export function CourseDetail() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
-        title={cleanCourseName(course.name)}
+        title={displayCourseName(course, showShortNames)}
         back={semester?.name ?? 'Semesters'}
         onMenuOpen={onMenuOpen}
         actions={
@@ -120,7 +122,7 @@ export function CourseDetail() {
           <div className="flex items-start gap-3 flex-wrap">
             <div className="flex-1 min-w-0">
               <h1 className="text-[22px] font-medium text-(--c-text)" style={{ letterSpacing: '-0.018em' }}>
-                {cleanCourseName(course.name)}
+                {displayCourseName(course, showShortNames)}
               </h1>
             </div>
           </div>

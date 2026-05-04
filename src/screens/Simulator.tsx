@@ -12,12 +12,14 @@ import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, courseRunningGrade, letterFor, pointsFor } from '@/lib/calculations';
 import { TARGET_GRADES, pointsForLetter } from '@/lib/gradeScale';
-import { fmtGPA, cn, cleanCourseName } from '@/lib/utils';
+import { fmtGPA, cn, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 
 const RESET = '__current__';
 
 export function Simulator() {
   const onMenuOpen = useMenuOpen();
+  const { showShortNames } = useDisplayPrefs();
   const semesters = useSemesters() ?? [];
   const courses = useCourses() ?? [];
   const criteria = useCriteria() ?? [];
@@ -161,7 +163,7 @@ export function Simulator() {
 
                   return (
                     <div key={course.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex-1 text-[14px] text-(--c-text) truncate">{cleanCourseName(course.name)}</span>
+                      <span className="flex-1 text-[14px] text-(--c-text) truncate">{displayCourseName(course, showShortNames)}</span>
                       {currentLetter && !override && (
                         <GradePill letter={currentLetter} size="sm" />
                       )}

@@ -2,41 +2,91 @@ import { mutation } from './_generated/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 
+async function requireUserId(ctx: { auth: { getUserIdentity(): Promise<{ tokenIdentifier: string } | null> } }) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+  return identity.tokenIdentifier;
+}
+
 export const clearAll = mutation({
   args: {},
   handler: async (ctx) => {
-    const semesters = await ctx.db.query('semesters').collect();
-    for (const s of semesters) await ctx.db.delete(s._id);
-    const courses = await ctx.db.query('courses').collect();
-    for (const c of courses) await ctx.db.delete(c._id);
-    const criteria = await ctx.db.query('criteria').collect();
-    for (const c of criteria) await ctx.db.delete(c._id);
-    const entries = await ctx.db.query('scoreEntries').collect();
-    for (const e of entries) await ctx.db.delete(e._id);
+    const userId = await requireUserId(ctx);
+
+    const semesters = await ctx.db
+      .query('semesters')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .collect();
+    for (const s of semesters) {
+      const courses = await ctx.db
+        .query('courses')
+        .withIndex('by_semesterId', q => q.eq('semesterId', s._id))
+        .collect();
+      for (const c of courses) {
+        const criteria = await ctx.db
+          .query('criteria')
+          .withIndex('by_courseId', q => q.eq('courseId', c._id))
+          .collect();
+        for (const cr of criteria) {
+          const entries = await ctx.db
+            .query('scoreEntries')
+            .withIndex('by_criterionId', q => q.eq('criterionId', cr._id))
+            .collect();
+          for (const e of entries) await ctx.db.delete(e._id);
+          await ctx.db.delete(cr._id);
+        }
+        await ctx.db.delete(c._id);
+      }
+      await ctx.db.delete(s._id);
+    }
   },
 });
 
 export const deleteAccount = mutation({
   args: {},
   handler: async (ctx) => {
-    const semesters = await ctx.db.query('semesters').collect();
-    for (const s of semesters) await ctx.db.delete(s._id);
-    const courses = await ctx.db.query('courses').collect();
-    for (const c of courses) await ctx.db.delete(c._id);
-    const criteria = await ctx.db.query('criteria').collect();
-    for (const c of criteria) await ctx.db.delete(c._id);
-    const entries = await ctx.db.query('scoreEntries').collect();
-    for (const e of entries) await ctx.db.delete(e._id);
-    const connections = await ctx.db.query('canvasConnections').collect();
-    for (const conn of connections) await ctx.db.delete(conn._id);
     const identity = await ctx.auth.getUserIdentity();
-    if (identity) {
-      const user = await ctx.db
-        .query('users')
-        .withIndex('byExternalId', q => q.eq('externalId', identity.subject))
-        .unique();
-      if (user) await ctx.db.delete(user._id);
+    if (!identity) throw new Error('Not authenticated');
+    const userId = identity.tokenIdentifier;
+
+    const semesters = await ctx.db
+      .query('semesters')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .collect();
+    for (const s of semesters) {
+      const courses = await ctx.db
+        .query('courses')
+        .withIndex('by_semesterId', q => q.eq('semesterId', s._id))
+        .collect();
+      for (const c of courses) {
+        const criteria = await ctx.db
+          .query('criteria')
+          .withIndex('by_courseId', q => q.eq('courseId', c._id))
+          .collect();
+        for (const cr of criteria) {
+          const entries = await ctx.db
+            .query('scoreEntries')
+            .withIndex('by_criterionId', q => q.eq('criterionId', cr._id))
+            .collect();
+          for (const e of entries) await ctx.db.delete(e._id);
+          await ctx.db.delete(cr._id);
+        }
+        await ctx.db.delete(c._id);
+      }
+      await ctx.db.delete(s._id);
     }
+
+    const conn = await ctx.db
+      .query('canvasConnections')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .first();
+    if (conn) await ctx.db.delete(conn._id);
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('byExternalId', q => q.eq('externalId', identity.subject))
+      .unique();
+    if (user) await ctx.db.delete(user._id);
   },
 });
 
@@ -81,20 +131,41 @@ export const clearAndImport = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    // Clear existing data
-    const existingSems = await ctx.db.query('semesters').collect();
-    for (const s of existingSems) await ctx.db.delete(s._id);
-    const existingCourses = await ctx.db.query('courses').collect();
-    for (const c of existingCourses) await ctx.db.delete(c._id);
-    const existingCriteria = await ctx.db.query('criteria').collect();
-    for (const c of existingCriteria) await ctx.db.delete(c._id);
-    const existingEntries = await ctx.db.query('scoreEntries').collect();
-    for (const e of existingEntries) await ctx.db.delete(e._id);
+    const userId = await requireUserId(ctx);
+
+    // Clear user's existing data via cascade
+    const existingSems = await ctx.db
+      .query('semesters')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .collect();
+    for (const s of existingSems) {
+      const courses = await ctx.db
+        .query('courses')
+        .withIndex('by_semesterId', q => q.eq('semesterId', s._id))
+        .collect();
+      for (const c of courses) {
+        const criteria = await ctx.db
+          .query('criteria')
+          .withIndex('by_courseId', q => q.eq('courseId', c._id))
+          .collect();
+        for (const cr of criteria) {
+          const entries = await ctx.db
+            .query('scoreEntries')
+            .withIndex('by_criterionId', q => q.eq('criterionId', cr._id))
+            .collect();
+          for (const e of entries) await ctx.db.delete(e._id);
+          await ctx.db.delete(cr._id);
+        }
+        await ctx.db.delete(c._id);
+      }
+      await ctx.db.delete(s._id);
+    }
 
     // Import with ID remapping
     const semIdMap = new Map<string, Id<'semesters'>>();
     for (const sem of args.semesters) {
       const newId = await ctx.db.insert('semesters', {
+        userId,
         name: sem.name,
         status: sem.status,
         createdAt: sem.createdAt,
@@ -109,6 +180,7 @@ export const clearAndImport = mutation({
       const semesterId = semIdMap.get(course.semesterId);
       if (!semesterId) continue;
       const newId = await ctx.db.insert('courses', {
+        userId,
         semesterId,
         code: course.code,
         name: course.name,

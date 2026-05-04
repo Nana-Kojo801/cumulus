@@ -11,7 +11,8 @@ import { useScoreEntries } from '@/hooks/useScoreEntries';
 import {
   cumulativeGPA, semesterGPA, gpaHistory, honorFor,
 } from '@/lib/calculations';
-import { fmtGPA, cleanCourseName } from '@/lib/utils';
+import { fmtGPA, displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 
 const rowItem = {
   hidden: { opacity: 0, x: -6 },
@@ -118,6 +119,7 @@ function DashboardSkeleton() {
 export function Dashboard() {
   const onMenuOpen = useMenuOpen();
   const navigate = useNavigate();
+  const { showShortNames } = useDisplayPrefs();
   const rawSemesters = useSemesters();
   const activeSemester = useActiveSemester();
   const rawCourses = useCourses();
@@ -300,7 +302,7 @@ export function Dashboard() {
                   onClick={() => navigate(`/courses/${course.id}`)}
                 >
                   <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>
-                    {cleanCourseName(course.name)}
+                    {displayCourseName(course, showShortNames)}
                   </span>
                   <IconChevronRight size={14} className="text-(--c-text-4)" />
                 </motion.button>

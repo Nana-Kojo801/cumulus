@@ -13,10 +13,12 @@ import { useCourse } from '@/hooks/useCourses';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
-import { cleanCourseName } from '@/lib/utils';
+import { displayCourseName } from '@/lib/utils';
+import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 
 export function CourseEdit() {
   const onMenuOpen = useMenuOpen();
+  const { showShortNames } = useDisplayPrefs();
   const { id } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -76,7 +78,7 @@ export function CourseEdit() {
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
         title={isNew ? 'New Course' : 'Edit Course'}
-        back={isNew ? 'Semesters' : (existingCourse ? cleanCourseName(existingCourse.name) : 'Course')}
+        back={isNew ? 'Semesters' : (existingCourse ? displayCourseName(existingCourse, showShortNames) : 'Course')}
         onMenuOpen={onMenuOpen}
       />
       <div className="flex-1 overflow-y-auto p-5">

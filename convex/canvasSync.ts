@@ -45,19 +45,26 @@ export const executeSync = mutation({
     connectionStudentId: v.number(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+    const userId = identity.tokenIdentifier;
+
     const semesters = args.semesters as SyncSemester[];
     const creditsMap = new Map(args.creditsByCanvasId.map(c => [c.canvasId, c.credits]));
     const selectedSet = new Set(args.selectedCanvasIds);
+
+    // Load all user's semesters for name lookup
+    const userSemesters = await ctx.db
+      .query('semesters')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .collect();
 
     for (const sem of semesters) {
       const selectedCourses = sem.courses.filter(c => selectedSet.has(c.canvasId));
       if (selectedCourses.length === 0) continue;
 
       let semesterId: Id<'semesters'>;
-      const existingSem = await ctx.db
-        .query('semesters')
-        .withIndex('by_name', q => q.eq('name', sem.name))
-        .first();
+      const existingSem = userSemesters.find(s => s.name === sem.name);
 
       if (existingSem) {
         semesterId = existingSem._id;
@@ -65,11 +72,12 @@ export const executeSync = mutation({
         if (sem.status === 'active') {
           const activeSem = await ctx.db
             .query('semesters')
-            .withIndex('by_status', q => q.eq('status', 'active'))
+            .withIndex('by_userId_status', q => q.eq('userId', userId).eq('status', 'active'))
             .first();
           if (activeSem) await ctx.db.patch(activeSem._id, { status: 'complete' });
         }
         semesterId = await ctx.db.insert('semesters', {
+          userId,
           name: sem.name,
           year: sem.year,
           term: sem.term,
@@ -87,7 +95,7 @@ export const executeSync = mutation({
           .withIndex('by_canvasId', q => q.eq('canvasId', course.canvasId))
           .first();
 
-        if (existingCourse) {
+        if (existingCourse && existingCourse.userId === userId) {
           courseId = existingCourse._id;
           await ctx.db.patch(existingCourse._id, {
             name: course.name,
@@ -96,6 +104,7 @@ export const executeSync = mutation({
           });
         } else {
           courseId = await ctx.db.insert('courses', {
+            userId,
             semesterId,
             code: course.code,
             name: course.name,
@@ -164,7 +173,10 @@ export const executeSync = mutation({
       }
     }
 
-    const existingConn = await ctx.db.query('canvasConnections').first();
+    const existingConn = await ctx.db
+      .query('canvasConnections')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .first();
     if (existingConn) {
       await ctx.db.patch(existingConn._id, { lastSyncedAt: Date.now() });
     }
