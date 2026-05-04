@@ -8,6 +8,7 @@
  * @module
  */
 
+<<<<<<< HEAD
 import type * as canvasConnections from "../canvasConnections.js";
 import type * as canvasSync from "../canvasSync.js";
 import type * as courses from "../courses.js";
@@ -18,12 +19,15 @@ import type * as scoreEntries from "../scoreEntries.js";
 import type * as semesters from "../semesters.js";
 import type * as users from "../users.js";
 
+=======
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
+<<<<<<< HEAD
 declare const fullApi: ApiFromModules<{
   canvasConnections: typeof canvasConnections;
   canvasSync: typeof canvasSync;
@@ -35,6 +39,9 @@ declare const fullApi: ApiFromModules<{
   semesters: typeof semesters;
   users: typeof users;
 }>;
+=======
+declare const fullApi: ApiFromModules<{}>;
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 
 /**
  * A utility for referencing Convex functions in your app's public API.

@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IconMinus, IconPlus } from '@/components/icons';
+<<<<<<< HEAD
+=======
+import { v4 as uuidv4 } from 'uuid';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';

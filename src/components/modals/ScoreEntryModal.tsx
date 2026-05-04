@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
 import { IconTrash, IconPlus } from '@/components/icons';
+=======
+import { useState, useEffect } from 'react';
+import { IconTrash, IconPlus } from '@/components/icons';
+import { v4 as uuidv4 } from 'uuid';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -189,6 +195,15 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
                 <span className="flex-1 text-[12px] font-mono tabular-nums text-(--c-text-3) text-right">
                   {pct !== null ? `${pct.toFixed(0)}%` : '—'}
                 </span>
+<<<<<<< HEAD
+=======
+                <button
+                  onClick={() => removeEntry(entry.id)}
+                  className="p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-colors cursor-pointer"
+                >
+                  <IconTrash size={13} />
+                </button>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
               </div>
             </div>
           );
@@ -200,10 +215,24 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Footer — fixed */}
       <div className="shrink-0 border-t border-(--c-line) flex justify-end gap-2 px-5 py-4">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant="primary" onClick={handleSave}>Save</Button>
+=======
+        <div className="px-4 pb-2">
+          <Button variant="ghost" size="sm" onClick={addEntry}>
+            <IconPlus size={13} /> Add instance
+          </Button>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-(--c-line)">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleSave}>Save</Button>
+        </div>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
       </div>
     </Sheet>
   );

@@ -1,5 +1,9 @@
 import { useState, useRef } from 'react';
+<<<<<<< HEAD
 import { useParams,useNavigate } from 'react-router-dom';
+=======
+import { useParams, useNavigate } from 'react-router-dom';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { IconPlus, IconEdit, IconTrash, IconTarget } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -12,7 +16,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CriterionModal } from '@/components/modals/CriterionModal';
 import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
 import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
+<<<<<<< HEAD
 import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
+=======
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { useCourse } from '@/hooks/useCourses';
 import { useSemester } from '@/hooks/useSemesters';
 import { useCriteriaByCourse } from '@/hooks/useCriteria';
@@ -102,7 +109,11 @@ export function CourseDetail() {
         back={semester?.name ?? 'Semesters'}
         onMenuOpen={onMenuOpen}
         actions={
+<<<<<<< HEAD
           <Button variant="ghost" size="sm" onClick={() => setShowEditCourse(true)}>
+=======
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${id}/edit`)}>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             <IconEdit size={14} /> Edit
           </Button>
         }
@@ -150,7 +161,15 @@ export function CourseDetail() {
                 </div>
               </div>
             </div>
+<<<<<<< HEAD
             <Button variant="default" onClick={() => setShowWhatScore(true)} className="self-start">
+=======
+            <Button
+              variant="default"
+              onClick={() => setShowWhatScore(true)}
+              className="self-start"
+            >
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
               <IconTarget size={14} /> What score do I need?
             </Button>
           </Card>

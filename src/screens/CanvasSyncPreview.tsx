@@ -1,6 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { IconCheck, IconChevronDown, IconChevronRight, IconAlertTriangle, IconLoader } from '@/components/icons';
+=======
+import { IconCheck, IconChevronDown, IconChevronRight, IconWarning, IconLoader } from '@/components/icons';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { motion, AnimatePresence } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -172,7 +176,11 @@ export function CanvasSyncPreview() {
         {/* Error */}
         {error && (
           <Card className="p-4 border-(--c-grade-e)/30 bg-(--c-grade-e)/8 flex items-start gap-3">
+<<<<<<< HEAD
             <IconAlertTriangle size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
+=======
+            <IconWarning size={16} className="text-(--c-grade-e) shrink-0 mt-0.5" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             <div className="flex-1">
               <div className="text-[13px] text-(--c-grade-e) font-medium mb-1">Sync failed</div>
               <div className="text-[13px] text-(--c-text-3)">{error}</div>
@@ -258,7 +266,11 @@ export function CanvasSyncPreview() {
             {preview.warnings.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
                 <Card className="p-4 border-(--c-grade-c)/30 bg-(--c-grade-c)/8 flex items-start gap-3">
+<<<<<<< HEAD
                   <IconAlertTriangle size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
+=======
+                  <IconWarning size={16} className="text-(--c-grade-c) shrink-0 mt-0.5" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                   <div>
                     <div className="text-[13px] font-medium text-(--c-grade-c) mb-1">
                       {preview.warnings.length === 1

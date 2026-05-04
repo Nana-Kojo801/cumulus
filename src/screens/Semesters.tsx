@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { IconPlus, IconTrash, IconChevronRight, IconEdit } from '@/components/icons';
+=======
+import { IconPlus, IconChevronRight, IconTrash } from '@/components/icons';
+import { v4 as uuidv4 } from 'uuid';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { motion } from 'framer-motion';
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
@@ -206,7 +211,11 @@ export function Semesters() {
         onMenuOpen={onMenuOpen}
         actions={
           <Button variant="primary" size="sm" onClick={() => setShowNew(true)}>
+<<<<<<< HEAD
             <IconPlus size={14} /> New
+=======
+            <IconPlus size={14} /> New Semester
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
           </Button>
         }
       />
@@ -277,9 +286,23 @@ export function Semesters() {
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}>
                         {sem.name}
                       </div>
+<<<<<<< HEAD
                       <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 2 }}>
                         {semCourses.length} courses · {credits} credits
                         {isActive && <span style={{ color: 'var(--c-accent)', marginLeft: 6, fontWeight: 600 }}>· Active</span>}
+=======
+                      <div className="flex items-center gap-3">
+                        <div className="text-[22px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
+                          {fmtGPA(gpa)}
+                        </div>
+                        <button
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-(--radius-r1) text-(--c-text-4) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
+                          onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
+                        >
+                          <IconTrash size={14} />
+                        </button>
+                        <IconChevronRight size={14} className="text-(--c-text-4)" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                       </div>
                     </div>
 

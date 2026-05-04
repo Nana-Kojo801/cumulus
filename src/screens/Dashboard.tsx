@@ -13,7 +13,26 @@ import { useScoreEntries } from '@/hooks/useScoreEntries';
 import {
   cumulativeGPA, semesterGPA, courseRunningGrade, gpaHistory, letterFor,
 } from '@/lib/calculations';
+<<<<<<< HEAD
 import { fmtGPA, fmtPct, cleanCourseName } from '@/lib/utils';
+=======
+import { fmtGPA, fmtPct } from '@/lib/utils';
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.22, ease: 'easeOut' as const, delay },
+});
+
+const rowItem = {
+  hidden: { opacity: 0, x: -6 },
+  show: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.18, ease: 'easeOut' as const, delay: i * 0.05 },
+  }),
+};
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 
 function GPARing({ gpa }: { gpa: number | null }) {
   const value = gpa ?? 0;
@@ -297,7 +316,11 @@ export function Dashboard() {
                     ) : (
                       <span className="w-8 shrink-0" />
                     )}
+<<<<<<< HEAD
                     <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
+=======
+                    <IconChevronRight size={14} className="text-(--c-text-4)" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                   </motion.button>
                 );
               })}
@@ -338,8 +361,15 @@ export function Dashboard() {
                       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>{sem.name}</div>
                       <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 1 }}>{credits} credits</div>
                     </div>
+<<<<<<< HEAD
                     <div className="c-bignum" style={{ fontSize: 24 }}>{fmtGPA(gpa)}</div>
                     <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
+=======
+                    <div className="text-[18px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
+                      {fmtGPA(gpa)}
+                    </div>
+                    <IconChevronRight size={14} className="text-(--c-text-4)" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
                   </motion.button>
                 );
               })}

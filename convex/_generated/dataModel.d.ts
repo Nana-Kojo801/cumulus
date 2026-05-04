@@ -8,6 +8,7 @@
  * @module
  */
 
+<<<<<<< HEAD
 import type {
   DataModelFromSchemaDefinition,
   DocumentByName,
@@ -16,10 +17,26 @@ import type {
 } from "convex/server";
 import type { GenericId } from "convex/values";
 import schema from "../schema.js";
+=======
+import { AnyDataModel } from "convex/server";
+import type { GenericId } from "convex/values";
+
+/**
+ * No `schema.ts` file found!
+ *
+ * This generated code has permissive types like `Doc = any` because
+ * Convex doesn't know your schema. If you'd like more type safety, see
+ * https://docs.convex.dev/using/schemas for instructions on how to add a
+ * schema file.
+ *
+ * After you change a schema, rerun codegen with `npx convex dev`.
+ */
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 
 /**
  * The names of all of your Convex tables.
  */
+<<<<<<< HEAD
 export type TableNames = TableNamesInDataModel<DataModel>;
 
 /**
@@ -31,6 +48,14 @@ export type Doc<TableName extends TableNames> = DocumentByName<
   DataModel,
   TableName
 >;
+=======
+export type TableNames = string;
+
+/**
+ * The type of a document stored in Convex.
+ */
+export type Doc = any;
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 
 /**
  * An identifier for a document in Convex.
@@ -42,10 +67,15 @@ export type Doc<TableName extends TableNames> = DocumentByName<
  *
  * IDs are just strings at runtime, but this type can be used to distinguish them from other
  * strings when type checking.
+<<<<<<< HEAD
  *
  * @typeParam TableName - A string literal type of the table name (like "users").
  */
 export type Id<TableName extends TableNames | SystemTableNames> =
+=======
+ */
+export type Id<TableName extends TableNames = TableNames> =
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
   GenericId<TableName>;
 
 /**
@@ -57,4 +87,8 @@ export type Id<TableName extends TableNames | SystemTableNames> =
  * This type is used to parameterize methods like `queryGeneric` and
  * `mutationGeneric` to make them type-safe.
  */
+<<<<<<< HEAD
 export type DataModel = DataModelFromSchemaDefinition<typeof schema>;
+=======
+export type DataModel = AnyDataModel;
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6

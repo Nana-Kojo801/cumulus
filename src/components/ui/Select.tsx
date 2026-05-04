@@ -1,7 +1,11 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
+<<<<<<< HEAD
 import { IconChevronDown, IconChevronUp, IconCheck } from '@/components/icons';
+=======
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { IconChevronDown, IconChevronUp, IconCheck } from '@/components/icons';
 
 export const Select = SelectPrimitive.Root;
 export const SelectGroup = SelectPrimitive.Group;
@@ -14,11 +18,11 @@ export const SelectTrigger = forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'h-11 flex items-center justify-between gap-2 w-full px-3',
-      'rounded-(--radius-r2) border border-(--c-line)',
-      'bg-(--c-bg-2) text-(--c-text) text-[16px] sm:text-[15px]',
+      'h-11 flex items-center justify-between gap-2 w-full px-3.5',
+      'rounded-(--radius-r2) border border-(--c-line-2)',
+      'bg-(--c-surface-2) text-(--c-text) text-[15px]',
       'outline-none transition-all cursor-pointer',
-      'focus:border-(--c-accent) focus:ring-1 focus:ring-(--c-accent)',
+      'focus:border-(--c-accent) focus:ring-2 focus:ring-(--c-accent)/20',
       'data-[placeholder]:text-(--c-text-4)',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       className
@@ -27,7 +31,11 @@ export const SelectTrigger = forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
+<<<<<<< HEAD
       <IconChevronDown size={16} className="text-(--c-text-3) shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+=======
+      <IconChevronDown size={15} className="text-(--c-text-3) shrink-0" />
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -44,7 +52,7 @@ export const SelectContent = forwardRef<
         'relative z-300 min-w-(--radix-select-trigger-width)',
         'overflow-hidden rounded-(--radius-r3)',
         'bg-(--c-surface) border border-(--c-line-2)',
-        'shadow-[0_8px_32px_oklch(0_0_0/0.45)]',
+        'shadow-elevated',
         'data-[state=open]:[animation:selectOpen_0.15s_ease-out]',
         'data-[state=closed]:[animation:selectClose_0.1s_ease-in]',
         className

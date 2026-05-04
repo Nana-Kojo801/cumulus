@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+<<<<<<< HEAD
   --font-sans:  'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Fraunces', 'Plus Jakarta Sans', serif;
   --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -112,6 +113,57 @@
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
+=======
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ─── Design-system tokens ──────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --c-bg:        oklch(0.14 0.013 252);
+  --c-bg-2:      oklch(0.17 0.013 252);
+
+  /* Card / surface layers */
+  --c-surface:   oklch(0.20 0.015 252);
+  --c-surface-2: oklch(0.23 0.015 252);
+  --c-surface-3: oklch(0.27 0.017 252);
+  --c-elevated:  oklch(0.22 0.015 252);
+
+  /* Borders */
+  --c-line:      oklch(1 0 0 / 0.07);
+  --c-line-2:    oklch(1 0 0 / 0.12);
+  --c-line-3:    oklch(1 0 0 / 0.19);
+
+  /* Text */
+  --c-text:      oklch(0.96 0.005 252);
+  --c-text-2:    oklch(0.78 0.008 252);
+  --c-text-3:    oklch(0.60 0.010 252);
+  --c-text-4:    oklch(0.44 0.012 252);
+
+  /* Accent — vivid blue */
+  --c-accent:    oklch(0.78 0.14 232);
+  --c-accent-2:  oklch(0.68 0.16 232);
+  --c-accent-bg: oklch(0.78 0.14 232 / 0.13);
+
+  /* Grade colours */
+  --c-grade-a:   oklch(0.80 0.13 155);
+  --c-grade-b:   oklch(0.80 0.13 118);
+  --c-grade-c:   oklch(0.78 0.14 75);
+  --c-grade-d:   oklch(0.74 0.14 40);
+  --c-grade-e:   oklch(0.70 0.14 20);
+
+  /* Border radii */
+  --radius-r1: 8px;
+  --radius-r2: 12px;
+  --radius-r3: 16px;
+  --radius-r4: 20px;
+  --radius-r5: 26px;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 html, body, #root {
   height: 100%;
   font-family: var(--f-ui);
@@ -123,12 +175,18 @@ html, body, #root {
   font-feature-settings: "tnum", "ss01";
 }
 
+<<<<<<< HEAD
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
+=======
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--c-line-3); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--c-text-4); }
 
+<<<<<<< HEAD
 /* ── Typography helpers ─────────────────────────────────────── */
 .tnum  { font-variant-numeric: tabular-nums; }
 .mono  { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -557,6 +615,27 @@ html, body, #root {
 .c-link { color: var(--c-accent); cursor: pointer; font-weight: 700; }
 .c-link:hover { text-decoration: underline; }
 
+=======
+/* ─── Shadow utilities ──────────────────────────────────────────────────── */
+@layer utilities {
+  .shadow-card {
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.055),
+      0 2px 6px oklch(0 0 0 / 0.22);
+  }
+  .shadow-elevated {
+    box-shadow:
+      0 0 0 1px oklch(1 0 0 / 0.09),
+      0 8px 28px oklch(0 0 0 / 0.55),
+      0 3px 8px oklch(0 0 0 / 0.28);
+  }
+  .shadow-sheet {
+    box-shadow: -6px 0 32px oklch(0 0 0 / 0.42);
+  }
+}
+
+/* ─── Pending-stripe (unscored entries) ─────────────────────────────────── */
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 .pending-stripe {
   background-image: repeating-linear-gradient(
     -45deg,
@@ -567,7 +646,7 @@ html, body, #root {
   );
 }
 
-/* Number inputs — hide browser spinners */
+/* ─── Number inputs — hide browser spinners ─────────────────────────────── */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -575,7 +654,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] { -moz-appearance: textfield; }
 
-/* Select dropdown animation */
+/* ─── Select dropdown animations ────────────────────────────────────────── */
 @keyframes selectOpen {
   from { opacity: 0; transform: scale(0.96) translateY(-6px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }

@@ -1,11 +1,18 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/icons';
+=======
+import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Sidebar } from './Sidebar';
 import { cn } from '@/lib/utils';
+import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/icons';
 
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
@@ -82,22 +89,33 @@ export function AppShell() {
     <MenuContext.Provider value={{ open: openMenu }}>
       <div className="c-app flex h-full overflow-hidden relative">
         {!isMobile && <Sidebar collapsed={isTablet} />}
+<<<<<<< HEAD
 
         <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
           <AppRoutes />
+=======
+        <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0', isMobile && 'pb-16')}>
+          {children}
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
         </main>
       </div>
-
       {isMobile && <MobileTabBar />}
     </MenuContext.Provider>
   );
 }
 
 const TAB_ITEMS = [
+<<<<<<< HEAD
   { to: '/',          icon: IconHome,      label: 'Home',      end: true },
   { to: '/semesters', icon: IconCalendar,  label: 'Semesters', end: false },
   { to: '/simulator', icon: IconBarChart,  label: 'Simulate',  end: false },
   { to: '/settings',  icon: IconSliders,   label: 'Settings',  end: false },
+=======
+  { to: '/',          icon: IconHome,     label: 'Home',     end: true },
+  { to: '/semesters', icon: IconCalendar, label: 'Semesters', end: false },
+  { to: '/simulator', icon: IconBarChart, label: 'Simulate',  end: false },
+  { to: '/settings',  icon: IconSliders,  label: 'Settings',  end: false },
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 ] as const;
 
 function MobileTabBar() {
@@ -117,6 +135,7 @@ function MobileTabBar() {
       {TAB_ITEMS.map(({ to, icon: Icon, label, end }) => (
         <NavLink key={to} to={to} end={end} className="flex-1">
           {({ isActive }) => (
+<<<<<<< HEAD
             <div className="flex flex-col items-center gap-0.5 py-2.5">
               <motion.div
                 style={{
@@ -147,6 +166,25 @@ function MobileTabBar() {
               >
                 {label}
               </span>
+=======
+            <div className={cn(
+              'flex flex-col items-center justify-center gap-1 py-2.5 transition-colors',
+              isActive ? 'text-(--c-accent)' : 'text-(--c-text-4)'
+            )}>
+              <motion.div
+                animate={{ scale: isActive ? 1.12 : 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+              >
+                <Icon size={21} strokeWidth={isActive ? 2.2 : 1.8} />
+              </motion.div>
+              <span className="text-[10px] tracking-wide">{label}</span>
+              {isActive && (
+                <motion.span
+                  layoutId="tab-indicator"
+                  className="absolute bottom-[calc(env(safe-area-inset-bottom)+2px)] w-5 h-[3px] rounded-full bg-(--c-accent)"
+                />
+              )}
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             </div>
           )}
         </NavLink>

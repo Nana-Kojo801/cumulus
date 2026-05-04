@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { IconPlus, IconTrash, IconChevronRight } from '@/components/icons';
+=======
+import { IconPlus, IconTrash } from '@/components/icons';
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
 import { Topbar } from '@/components/layout/Topbar';
 import { useMenuOpen } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/Button';
@@ -67,7 +71,11 @@ export function SemesterDetail() {
         back="Semesters"
         onMenuOpen={onMenuOpen}
         actions={
+<<<<<<< HEAD
           <Button variant="primary" size="sm" onClick={() => setShowAddCourse(true)}>
+=======
+          <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
             <IconPlus size={14} /> Add Course
           </Button>
         }
@@ -98,6 +106,7 @@ export function SemesterDetail() {
 
         {/* Course list */}
         {courses.length === 0 ? (
+<<<<<<< HEAD
           <div
             style={{
               padding: '60px 24px',
@@ -112,6 +121,11 @@ export function SemesterDetail() {
             </div>
             <p style={{ fontSize: 13, marginBottom: 18 }}>Add your first course to start tracking.</p>
             <Button variant="primary" size="sm" onClick={() => setShowAddCourse(true)}>
+=======
+          <Card className="p-10 text-center">
+            <p className="text-(--c-text-3) text-[14px] mb-3">No courses yet.</p>
+            <Button variant="primary" size="sm" onClick={() => navigate(`/courses/new?semester=${id}`)}>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
               <IconPlus size={14} /> Add Course
             </Button>
           </div>
@@ -132,6 +146,7 @@ export function SemesterDetail() {
                   style={{ borderTop: i > 0 ? '1px solid var(--c-line)' : 'none' }}
                   onClick={() => navigate(`/courses/${course.id}`)}
                 >
+<<<<<<< HEAD
                   {course.code && (
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--c-text-4)', fontFamily: 'var(--f-mono)', minWidth: 48, flexShrink: 0 }}>
                       {course.code}
@@ -155,6 +170,33 @@ export function SemesterDetail() {
                   </button>
                   <IconChevronRight size={14} style={{ color: 'var(--c-text-4)', flexShrink: 0 }} />
                 </div>
+=======
+                  <div className="p-4 flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        {course.code && <Tag className="mb-1">{course.code}</Tag>}
+                        <div className="text-[14px] font-medium text-(--c-text) mt-1">{course.name}</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {pct !== null && letter !== '—' && <GradePill letter={letter} size="sm" />}
+                        <button
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded text-(--c-text-4) hover:text-(--c-grade-e) transition-all cursor-pointer"
+                          onClick={e => { e.stopPropagation(); setDeleteId(course.id); }}
+                        >
+                          <IconTrash size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Chip>{course.credits} cr</Chip>
+                      <span className="text-[12px] text-(--c-text-3) font-mono tabular-nums">
+                        {fmtPct(pct, 1)}
+                      </span>
+                    </div>
+                    <ProgressBar value={weightCompleted} />
+                  </div>
+                </Card>
+>>>>>>> f015a05a7e316a7e27334f0db0dad84b1bacc6e6
               );
             })}
           </div>
