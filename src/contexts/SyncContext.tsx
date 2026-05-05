@@ -109,7 +109,14 @@ function useWithLocalFallback<T extends { id: string }>(
   if (!isOnline || pendingCount > 0) {
     return localData ?? convexData;
   }
-  return convexData ?? localData;
+  
+  // When online, if Convex data hasn't loaded, return undefined to trigger skeleton loaders
+  // instead of showing potentially stale local data or an empty state.
+  if (convexData === undefined) {
+    return undefined;
+  }
+  
+  return convexData;
 }
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
@@ -162,7 +169,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const semesters = useWithLocalFallback(
     mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount
   );
-  const courses = useWithLocalFallback(
+  const rawCourses = useWithLocalFallback(
     mappedCourses, localCourses, localDb.courses, isOnline, pendingCount
   );
   const criteria = useWithLocalFallback(
@@ -171,6 +178,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const scoreEntries = useWithLocalFallback(
     mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount
   );
+
+  const courses = useMemo(() => {
+    if (!rawCourses) return undefined;
+    return [...rawCourses].sort((a, b) => a.name.localeCompare(b.name));
+  }, [rawCourses]);
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
