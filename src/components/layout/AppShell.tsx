@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery } from 'convex/react';
 import { useUser } from '@clerk/clerk-react';
+import { usePostHog } from '@posthog/react';
 import { api } from '../../../convex/_generated/api';
 import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/icons';
 import { Sidebar } from './Sidebar';
@@ -67,8 +68,20 @@ function AppRoutes() {
 }
 
 export function AppShell() {
-  const { isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const { isLoaded: clerkLoaded, isSignedIn, user: clerkUser } = useUser();
+  const posthog = usePostHog();
   const convexUser = useQuery(api.users.current);
+
+  useEffect(() => {
+    if (isSignedIn && clerkUser) {
+      posthog?.identify(clerkUser.id, {
+        email: clerkUser.primaryEmailAddress?.emailAddress,
+        name: clerkUser.fullName ?? undefined,
+      });
+    } else if (clerkLoaded && !isSignedIn) {
+      posthog?.reset();
+    }
+  }, [isSignedIn, clerkUser, clerkLoaded, posthog]);
   const { isOnline, pendingCount } = useSyncContext();
   const browserOnline = useOnlineStatus();
 

@@ -22,6 +22,7 @@ import { bandFor } from '@/lib/gradeScale';
 import { fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { api } from '../../convex/_generated/api';
+import { usePostHog } from '@posthog/react';
 import type { Criterion } from '@/db/schema';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ export function CourseDetail() {
   const onMenuOpen = useMenuOpen();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { showShortNames } = useDisplayPrefs();
   const { toast } = useToast();
 
@@ -105,6 +107,7 @@ export function CourseDetail() {
 
   async function handleDeleteCriterion(critId: string) {
     await removeCriterion({ id: critId });
+    posthog?.capture('criterion_deleted');
     toast('Criterion deleted');
   }
 
@@ -165,7 +168,7 @@ export function CourseDetail() {
             </div>
             <Button
               variant="default"
-              onClick={() => setShowWhatScore(true)}
+              onClick={() => { posthog?.capture('gpa_forecast_viewed'); setShowWhatScore(true); }}
               className="self-start"
             >
               <IconTarget size={14} /> What score do I need?

@@ -13,6 +13,7 @@ import { buildSyncPreview } from '@/lib/canvas/sync';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useUser } from '@clerk/clerk-react';
+import { usePostHog } from '@posthog/react';
 import { useToast } from '@/components/ui/Toast';
 import { useCourses } from '@/hooks/useCourses';
 import { cn, cleanCourseName } from '@/lib/utils';
@@ -25,6 +26,7 @@ interface ProgressStep { step: string; label: string; done: boolean; }
 
 export function OnboardingScreen() {
   const { user } = useUser();
+  const posthog = usePostHog();
   const { toast } = useToast();
   const navigate = useNavigate();
   const courses = useCourses() ?? [];
@@ -113,6 +115,7 @@ export function OnboardingScreen() {
         studentId: conn.studentId,
       });
       setSavedConn(conn);
+      posthog?.capture('canvas_connected', { student_name: conn.studentName });
       runFetch(conn);
     } catch (err) {
       if (err instanceof CanvasApiError && err.status === 401) {
@@ -136,6 +139,10 @@ export function OnboardingScreen() {
         connectionStudentName: savedConn.studentName,
         connectionStudentId: savedConn.studentId,
       });
+      posthog?.capture('canvas_import_completed', {
+        courses_imported: selected.size,
+        semesters_count: preview.semesters.length,
+      });
       await completeOnboarding({});
       navigate('/');
     } catch {
@@ -145,6 +152,7 @@ export function OnboardingScreen() {
   }
 
   async function handleSkip() {
+    posthog?.capture('onboarding_skipped');
     await completeOnboarding({});
     navigate('/');
   }

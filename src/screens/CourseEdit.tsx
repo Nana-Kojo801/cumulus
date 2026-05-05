@@ -11,6 +11,7 @@ import { Chip } from '@/components/ui/Chip';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourse } from '@/hooks/useCourses';
 import { api } from '../../convex/_generated/api';
+import { usePostHog } from '@posthog/react';
 import { useToast } from '@/components/ui/Toast';
 import { displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
@@ -22,6 +23,7 @@ export function CourseEdit() {
   const { id } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { toast } = useToast();
   const isNew = !id;
 
@@ -72,10 +74,12 @@ export function CourseEdit() {
         credits,
         createdAt: Date.now(),
       });
+      posthog?.capture('course_created', { credits, has_code: !!code.trim() });
       toast('Course created');
       navigate(`/courses/${newId}`);
     } else {
       await updateCourse({ id: id!, name: name.trim(), code: code.trim(), credits, semesterId });
+      posthog?.capture('course_updated', { credits, has_code: !!code.trim() });
       toast('Course updated');
       navigate(`/courses/${id}`);
     }

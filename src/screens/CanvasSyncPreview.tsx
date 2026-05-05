@@ -11,6 +11,7 @@ import { useCanvasConnection } from '@/hooks/useCanvasConnection';
 import { useCourses } from '@/hooks/useCourses';
 import { buildSyncPreview } from '@/lib/canvas/sync';
 import { CanvasApiError } from '@/lib/canvas/client';
+import { usePostHog } from '@posthog/react';
 import { useToast } from '@/components/ui/Toast';
 import { cn, cleanCourseName } from '@/lib/utils';
 import type { SyncPreview, SyncProgressEvent } from '@/lib/canvas/sync';
@@ -27,6 +28,7 @@ interface ProgressStep {
 export function CanvasSyncPreview() {
   const onMenuOpen = useMenuOpen();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { toast } = useToast();
   const { connection } = useCanvasConnection();
   const courses = useCourses() ?? [];
@@ -44,6 +46,7 @@ export function CanvasSyncPreview() {
 
   const runFetch = useCallback(async () => {
     if (!connection) return;
+    posthog?.capture('canvas_sync_started');
     setPhase('fetching');
     setError(null);
     setProgressSteps([]);
@@ -103,6 +106,7 @@ export function CanvasSyncPreview() {
         connectionStudentId: connection.studentId,
       });
       await updateLastSynced({ lastSyncedAt: Date.now() });
+      posthog?.capture('canvas_sync_completed', { courses_imported: selected.size });
       setPhase('done');
       toast('Canvas sync complete');
     } catch {

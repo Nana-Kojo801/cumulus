@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import type { Criterion } from '@/db/schema';
 import { cn } from '@/lib/utils';
+import { usePostHog } from '@posthog/react';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '../../../convex/_generated/api';
 import { useOfflineMutation } from '@/lib/useOfflineMutation';
@@ -18,6 +19,7 @@ interface CriterionModalProps {
 }
 
 export function CriterionModal({ open, onClose, courseId, existingCriteria, editing }: CriterionModalProps) {
+  const posthog = usePostHog();
   const { toast } = useToast();
   const createCriterion = useOfflineMutation(
     api.criteria.create,
@@ -65,6 +67,7 @@ export function CriterionModal({ open, onClose, courseId, existingCriteria, edit
 
     if (editing) {
       await updateCriterion({ id: editing.id, name: name.trim(), weight: w });
+      posthog?.capture('criterion_updated', { weight: w });
       toast('Criterion updated');
     } else {
       await createCriterion({
@@ -74,6 +77,7 @@ export function CriterionModal({ open, onClose, courseId, existingCriteria, edit
         instanceCount: 0,
         createdAt: Date.now(),
       });
+      posthog?.capture('criterion_added', { weight: w });
       toast('Criterion added — open Score to add entries');
     }
     onClose();
