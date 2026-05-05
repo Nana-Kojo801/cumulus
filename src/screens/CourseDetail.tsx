@@ -21,11 +21,11 @@ import { courseRunningGrade, criterionAverage, letterFor } from '@/lib/calculati
 import { bandFor } from '@/lib/gradeScale';
 import { fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
-import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Criterion } from '@/db/schema';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 const BAND_BORDER: Record<string, string> = {
   a: 'var(--c-grade-a)',
@@ -42,7 +42,11 @@ export function CourseDetail() {
   const { showShortNames } = useDisplayPrefs();
   const { toast } = useToast();
 
-  const removeCriterion = useMutation(api.criteria.remove);
+  const removeCriterion = useOfflineMutation(
+    api.criteria.remove,
+    'criteria/remove',
+    (args) => args,
+  );
 
   const course = useCourse(id);
   const semester = useSemester(course?.semesterId);

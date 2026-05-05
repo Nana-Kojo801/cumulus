@@ -7,8 +7,8 @@ import type { Criterion, ScoreEntry, Course } from '@/db/schema';
 import { criterionAverage } from '@/lib/calculations';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
-import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 interface ScoreEntryModalProps {
   open: boolean;
@@ -29,7 +29,11 @@ interface LocalEntry {
 
 export function ScoreEntryModal({ open, onClose, criterion, course: _course, entries }: ScoreEntryModalProps) {
   const { toast } = useToast();
-  const saveAll = useMutation(api.scoreEntries.saveAll);
+  const saveAll = useOfflineMutation(
+    api.scoreEntries.saveAll,
+    'scoreEntries/saveAll',
+    (args) => args,
+  );
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 

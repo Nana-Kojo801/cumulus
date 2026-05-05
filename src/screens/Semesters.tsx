@@ -18,10 +18,10 @@ import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { cumulativeGPA, semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
 import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
-import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
 import type { Semester } from '@/db/schema';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 
 interface SemesterSheetProps {
@@ -33,8 +33,17 @@ interface SemesterSheetProps {
 function SemesterSheet({ open, onClose, existing }: SemesterSheetProps) {
   const { toast } = useToast();
   const semesters = useSemesters() ?? [];
-  const createSemester = useMutation(api.semesters.create);
-  const updateSemester = useMutation(api.semesters.update);
+  const createSemester = useOfflineMutation(
+    api.semesters.create,
+    'semesters/create',
+    (args) => ({ ...args, tempId: crypto.randomUUID() }),
+    (localArgs) => (localArgs as { tempId: string }).tempId,
+  );
+  const updateSemester = useOfflineMutation(
+    api.semesters.update,
+    'semesters/update',
+    (args) => args,
+  );
   const isNew = !existing;
 
   const [name, setName] = useState('');
@@ -141,7 +150,11 @@ export function Semesters() {
   const [autoOpened, setAutoOpened] = useState(false);
   const [addCourseSemId, setAddCourseSemId] = useState<string | null>(null);
 
-  const removeSemester = useMutation(api.semesters.remove);
+  const removeSemester = useOfflineMutation(
+    api.semesters.remove,
+    'semesters/remove',
+    (args) => args,
+  );
   const rawSemesters = useSemesters();
   const courses = useCourses() ?? [];
   const criteria = useCriteria() ?? [];

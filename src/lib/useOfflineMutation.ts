@@ -9,6 +9,7 @@ export function useOfflineMutation<Args extends Record<string, unknown>, Return>
   mutationRef: FunctionReference<'mutation', 'public', Args, Return>,
   mutationName: MutationName,
   buildLocalArgs: (args: Args) => QueuedMutation['args'],
+  getOfflineReturn?: (localArgs: QueuedMutation['args'], args: Args) => Return,
 ): (args: Args) => Promise<Return | undefined> {
   const isOnline = useOnlineStatus();
   const convexMutation = useMutation(mutationRef);
@@ -28,6 +29,6 @@ export function useOfflineMutation<Args extends Record<string, unknown>, Return>
     await applyLocalMutation(mutation);
     await queueMutation(mutation);
     refreshPendingCount();
-    return undefined;
-  }, [isOnline, convexMutation, mutationName, buildLocalArgs, refreshPendingCount]);
+    return getOfflineReturn ? getOfflineReturn(localArgs, args) : undefined;
+  }, [isOnline, convexMutation, mutationName, buildLocalArgs, refreshPendingCount, getOfflineReturn]);
 }

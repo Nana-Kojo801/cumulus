@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/Label';
 import type { Criterion } from '@/db/schema';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
-import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 interface CriterionModalProps {
   open: boolean;
@@ -19,8 +19,17 @@ interface CriterionModalProps {
 
 export function CriterionModal({ open, onClose, courseId, existingCriteria, editing }: CriterionModalProps) {
   const { toast } = useToast();
-  const createCriterion = useMutation(api.criteria.create);
-  const updateCriterion = useMutation(api.criteria.update);
+  const createCriterion = useOfflineMutation(
+    api.criteria.create,
+    'criteria/create',
+    (args) => ({ ...args, tempId: crypto.randomUUID() }),
+    (localArgs) => (localArgs as { tempId: string }).tempId,
+  );
+  const updateCriterion = useOfflineMutation(
+    api.criteria.update,
+    'criteria/update',
+    (args) => args,
+  );
 
   const [name, setName] = useState('');
   const [weight, setWeight] = useState('');

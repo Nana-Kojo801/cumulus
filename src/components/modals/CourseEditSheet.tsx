@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/Label';
 import { Chip } from '@/components/ui/Chip';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourse } from '@/hooks/useCourses';
-import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 interface CourseEditSheetProps {
   open: boolean;
@@ -24,8 +24,17 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
   const isNew = !courseId;
   const semesters = useSemesters() ?? [];
   const existingCourse = useCourse(courseId);
-  const createCourse = useMutation(api.courses.create);
-  const updateCourse = useMutation(api.courses.update);
+  const createCourse = useOfflineMutation(
+    api.courses.create,
+    'courses/create',
+    (args) => ({ ...args, tempId: crypto.randomUUID() }),
+    (localArgs) => (localArgs as { tempId: string }).tempId,
+  );
+  const updateCourse = useOfflineMutation(
+    api.courses.update,
+    'courses/update',
+    (args) => args,
+  );
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -75,7 +84,7 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
         createdAt: Date.now(),
       });
       toast('Course created');
-      onSaved?.(newId);
+      if (newId) onSaved?.(newId);
     } else {
       await updateCourse({ id: courseId!, name: name.trim(), code: code.trim(), shortName: shortName.trim() || undefined, credits, semesterId });
       toast('Course updated');

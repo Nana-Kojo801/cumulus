@@ -10,11 +10,11 @@ import { Label } from '@/components/ui/Label';
 import { Chip } from '@/components/ui/Chip';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourse } from '@/hooks/useCourses';
-import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
 import { displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 export function CourseEdit() {
   const onMenuOpen = useMenuOpen();
@@ -25,8 +25,17 @@ export function CourseEdit() {
   const { toast } = useToast();
   const isNew = !id;
 
-  const createCourse = useMutation(api.courses.create);
-  const updateCourse = useMutation(api.courses.update);
+  const createCourse = useOfflineMutation(
+    api.courses.create,
+    'courses/create',
+    (args) => ({ ...args, tempId: crypto.randomUUID() }),
+    (localArgs) => (localArgs as { tempId: string }).tempId,
+  );
+  const updateCourse = useOfflineMutation(
+    api.courses.update,
+    'courses/update',
+    (args) => args,
+  );
 
   const semesters = useSemesters() ?? [];
   const existingCourse = useCourse(id);

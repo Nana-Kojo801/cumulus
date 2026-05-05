@@ -28,7 +28,7 @@ export function CanvasSyncPreview() {
   const onMenuOpen = useMenuOpen();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const connection = useCanvasConnection();
+  const { connection } = useCanvasConnection();
   const courses = useCourses() ?? [];
   const executeSyncMutation = useMutation(api.canvasSync.executeSync);
   const updateLastSynced = useMutation(api.canvasConnections.updateLastSynced);
