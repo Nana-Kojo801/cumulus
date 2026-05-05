@@ -139,41 +139,45 @@ export function AppShell() {
 
   return (
     <MenuContext.Provider value={{ open: openMenu }}>
-      <div className="c-app flex h-full overflow-hidden relative">
-        {!isMobile && <Sidebar collapsed={isTablet} />}
-        <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
-          <AppRoutes />
-        </main>
-      </div>
+      <div className="flex flex-col h-full overflow-hidden w-full">
+        {/* Offline / sync indicator */}
+        <AnimatePresence initial={false}>
+          {(!isOnline || pendingCount > 0) && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="z-[500] flex items-center justify-center text-[11px] font-semibold gap-2 shrink-0 overflow-hidden"
+              style={{
+                background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
+                color: 'white',
+              }}
+            >
+              <div className="py-1.5 flex items-center gap-2">
+                {isOnline ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
+                    Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-white/70" />
+                    Offline — changes saved locally
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Offline / sync indicator */}
-      <AnimatePresence>
-        {(!isOnline || pendingCount > 0) && (
-          <motion.div
-            initial={{ y: -40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -40, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed top-0 inset-x-0 z-[500] flex items-center justify-center py-1.5 text-[11px] font-semibold gap-2"
-            style={{
-              background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
-              color: 'white',
-            }}
-          >
-            {isOnline ? (
-              <>
-                <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
-                Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
-              </>
-            ) : (
-              <>
-                <div className="w-2 h-2 rounded-full bg-white/70" />
-                Offline — changes saved locally
-              </>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div className="c-app flex flex-1 overflow-hidden relative" style={{ height: 'auto' }}>
+          {!isMobile && <Sidebar collapsed={isTablet} />}
+          <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
+            <AppRoutes />
+          </main>
+        </div>
+      </div>
 
       {isMobile && <MobileTabBar />}
     </MenuContext.Provider>
