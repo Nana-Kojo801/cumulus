@@ -7,6 +7,7 @@ import { localDb, clearAllLocalData } from '@/lib/localDb';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { getPendingCount } from '@/lib/offlineQueue';
 import type { Semester, Course, Criterion, ScoreEntry } from '@/db/schema';
+import { useUser } from '@clerk/clerk-react';
 
 function mapSemester(doc: Record<string, unknown>): Semester {
   return {
