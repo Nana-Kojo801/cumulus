@@ -79,31 +79,37 @@ export function useSyncContext() {
   return useContext(SyncContext);
 }
 
-function useWithLocalFallback<T>(
+import { useLiveQuery } from 'dexie-react-hooks';
+
+function syncTable<T extends { id: string }>(table: any, data: T[]) {
+  return localDb.transaction('rw', table, async () => {
+    const existing = await table.keys();
+    const newIds = new Set(data.map(d => d.id));
+    const toDelete = existing.filter((id: any) => !newIds.has(id));
+    if (toDelete.length > 0) {
+      await table.bulkDelete(toDelete);
+    }
+    await table.bulkPut(data);
+  });
+}
+
+function useWithLocalFallback<T extends { id: string }>(
   convexData: T[] | undefined,
-  loadLocal: () => Promise<T[]>,
-  saveLocal: (data: T[]) => Promise<void>,
-  resetKey: number
+  localData: T[] | undefined,
+  table: any,
+  isOnline: boolean,
+  pendingCount: number
 ): T[] | undefined {
-  const [local, setLocal] = useState<T[] | undefined>(undefined);
-  const loadedKey = useRef(-1);
-
   useEffect(() => {
-    if (loadedKey.current !== resetKey) {
-      loadedKey.current = resetKey;
-      setLocal(undefined);
-      loadLocal().then(d => { if (d.length > 0) setLocal(d); });
+    if (convexData !== undefined && pendingCount === 0) {
+      syncTable(table, convexData).catch(console.error);
     }
-  }, [resetKey, loadLocal]);
+  }, [convexData, pendingCount, table]);
 
-  useEffect(() => {
-    if (convexData !== undefined) {
-      setLocal(convexData);
-      saveLocal(convexData).catch(console.error);
-    }
-  }, [convexData, saveLocal]);
-
-  return convexData ?? local;
+  if (!isOnline || pendingCount > 0) {
+    return localData ?? convexData;
+  }
+  return convexData ?? localData;
 }
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
@@ -148,29 +154,22 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     [convexEntries],
   );
 
+  const localSemesters = useLiveQuery(() => localDb.semesters.toArray(), [resetKey]);
+  const localCourses = useLiveQuery(() => localDb.courses.toArray(), [resetKey]);
+  const localCriteria = useLiveQuery(() => localDb.criteria.toArray(), [resetKey]);
+  const localEntries = useLiveQuery(() => localDb.scoreEntries.toArray(), [resetKey]);
+
   const semesters = useWithLocalFallback(
-    mappedSemesters,
-    () => localDb.semesters.toArray(),
-    data => localDb.semesters.bulkPut(data).then(() => undefined),
-    resetKey
+    mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount
   );
   const courses = useWithLocalFallback(
-    mappedCourses,
-    () => localDb.courses.toArray(),
-    data => localDb.courses.bulkPut(data).then(() => undefined),
-    resetKey
+    mappedCourses, localCourses, localDb.courses, isOnline, pendingCount
   );
   const criteria = useWithLocalFallback(
-    mappedCriteria,
-    () => localDb.criteria.toArray(),
-    data => localDb.criteria.bulkPut(data).then(() => undefined),
-    resetKey
+    mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount
   );
   const scoreEntries = useWithLocalFallback(
-    mappedEntries,
-    () => localDb.scoreEntries.toArray(),
-    data => localDb.scoreEntries.bulkPut(data).then(() => undefined),
-    resetKey
+    mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount
   );
 
   const refreshPendingCount = useCallback(() => {
