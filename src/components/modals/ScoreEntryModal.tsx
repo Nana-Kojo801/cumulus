@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import type { Criterion, ScoreEntry, Course } from '@/db/schema';
 import { criterionAverage } from '@/lib/calculations';
+import { usePostHog } from '@posthog/react';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import { api } from '../../../convex/_generated/api';
@@ -28,6 +29,7 @@ interface LocalEntry {
 }
 
 export function ScoreEntryModal({ open, onClose, criterion, course: _course, entries }: ScoreEntryModalProps) {
+  const posthog = usePostHog();
   const { toast } = useToast();
   const saveAll = useOfflineMutation(
     api.scoreEntries.saveAll,
@@ -93,6 +95,12 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
     const toDelete = entries.filter(e => !currentIds.has(e.id)).map(e => e.id);
 
     await saveAll({ criterionId: criterion.id, toCreate, toUpdate, toDelete });
+    posthog?.capture('scores_saved', {
+      entries_created: toCreate.length,
+      entries_updated: toUpdate.length,
+      entries_deleted: toDelete.length,
+      total_entries: localEntries.length,
+    });
     toast('Scores saved');
     onClose();
   }
