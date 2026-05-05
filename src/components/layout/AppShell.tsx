@@ -8,6 +8,8 @@ import { IconHome, IconCalendar, IconBarChart, IconSliders } from '@/components/
 import { Sidebar } from './Sidebar';
 import { cn } from '@/lib/utils';
 import { useSyncContext } from '@/contexts/SyncContext';
+import { useOnlineStatus } from '@/lib/useOnlineStatus';
+import { clearAllLocalData, hasAnyLocalData, localDb } from '@/lib/localDb';
 
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
@@ -68,17 +70,52 @@ export function AppShell() {
   const { isLoaded: clerkLoaded, isSignedIn } = useUser();
   const convexUser = useQuery(api.users.current);
   const { isOnline, pendingCount } = useSyncContext();
+  const browserOnline = useOnlineStatus();
 
   const [cachedUser, setCachedUser] = useState<{ onboardingComplete: boolean } | null>(() => {
     try { return JSON.parse(localStorage.getItem(USER_CACHE_KEY) ?? 'null'); } catch { return null; }
   });
+  const [offlineBootReady, setOfflineBootReady] = useState(false);
+  const [hasOfflineData, setHasOfflineData] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [hasData, cachedDbUser] = await Promise.all([
+        hasAnyLocalData(),
+        localDb.userCache.get('current'),
+      ]);
+      if (cancelled) return;
+      setHasOfflineData(hasData);
+      if (!cachedUser && cachedDbUser) {
+        setCachedUser({ onboardingComplete: cachedDbUser.onboardingComplete });
+      }
+      setOfflineBootReady(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (convexUser) {
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(convexUser));
       setCachedUser(convexUser);
+      void localDb.userCache.put({
+        id: 'current',
+        name: '',
+        email: '',
+        onboardingComplete: convexUser.onboardingComplete,
+      });
     }
   }, [convexUser]);
+
+  useEffect(() => {
+    // If user has no valid session while online, clear stale local data.
+    if (!clerkLoaded || isSignedIn || !browserOnline) return;
+    void clearAllLocalData();
+    localStorage.removeItem(USER_CACHE_KEY);
+    setCachedUser(null);
+    setHasOfflineData(false);
+  }, [clerkLoaded, isSignedIn, browserOnline]);
 
   const [width, setWidth] = useState(window.innerWidth);
   useEffect(() => {
@@ -89,8 +126,9 @@ export function AppShell() {
 
   const openMenu = useCallback(() => {}, []);
 
-  if (!clerkLoaded) return <LoadingSpinner />;
-  if (!isSignedIn) return <AuthScreen />;
+  const offlineCanBoot = !browserOnline && offlineBootReady && hasOfflineData && !!cachedUser;
+  if (!clerkLoaded && !offlineCanBoot) return <LoadingSpinner />;
+  if (clerkLoaded && !isSignedIn && !offlineCanBoot) return <AuthScreen />;
 
   const effectiveUser = convexUser ?? cachedUser;
   if (convexUser === undefined && !cachedUser) return <LoadingSpinner />;

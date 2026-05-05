@@ -46,3 +46,26 @@ class CumulusDB extends Dexie {
 }
 
 export const localDb = new CumulusDB();
+
+export async function hasAnyLocalData(): Promise<boolean> {
+  const [semesters, courses, criteria, scoreEntries, pendingMutations, userCache] = await Promise.all([
+    localDb.semesters.count(),
+    localDb.courses.count(),
+    localDb.criteria.count(),
+    localDb.scoreEntries.count(),
+    localDb.pendingMutations.count(),
+    localDb.userCache.count(),
+  ]);
+  return (semesters + courses + criteria + scoreEntries + pendingMutations + userCache) > 0;
+}
+
+export async function clearAllLocalData(): Promise<void> {
+  await Promise.all([
+    localDb.semesters.clear(),
+    localDb.courses.clear(),
+    localDb.criteria.clear(),
+    localDb.scoreEntries.clear(),
+    localDb.pendingMutations.clear(),
+    localDb.userCache.clear(),
+  ]);
+}

@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Cumulus',
         short_name: 'Cumulus',
         description: 'GPA tracker for Ashesi University',
-        theme_color: '#1e2133',
-        background_color: '#1e2133',
+        theme_color: '#8b1e2d',
+        background_color: '#8b1e2d',
         display: 'standalone',
         start_url: '/',
         icons: [

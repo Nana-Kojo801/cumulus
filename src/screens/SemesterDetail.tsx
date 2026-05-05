@@ -14,9 +14,9 @@ import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { semesterGPA, courseRunningGrade, letterFor } from '@/lib/calculations';
 import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
-import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '@/components/ui/Toast';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 export function SemesterDetail() {
   const onMenuOpen = useMenuOpen();
@@ -26,8 +26,16 @@ export function SemesterDetail() {
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const removeCourse = useMutation(api.courses.remove);
-  const setSemesterStatus = useMutation(api.semesters.setStatus);
+  const removeCourse = useOfflineMutation(
+    api.courses.remove,
+    'courses/remove',
+    (args) => args,
+  );
+  const setSemesterStatus = useOfflineMutation(
+    api.semesters.setStatus,
+    'semesters/setStatus',
+    (args) => args,
+  );
 
   const semester = useSemester(id);
   const courses = useCoursesBySemester(id);

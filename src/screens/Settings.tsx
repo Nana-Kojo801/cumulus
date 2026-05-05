@@ -22,6 +22,7 @@ import { api } from '../../convex/_generated/api';
 import { useClerk, useUser } from '@clerk/clerk-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
+import { useOfflineMutation } from '@/lib/useOfflineMutation';
 
 function fmtDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -115,7 +116,7 @@ export function Settings() {
   const onMenuOpen = useMenuOpen();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const connection = useCanvasConnection();
+  const { connection, isLoading: connectionLoading } = useCanvasConnection();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
   const { theme, setTheme } = useTheme();
@@ -132,7 +133,11 @@ export function Settings() {
   const criteria = useCriteria() ?? [];
   const entries = useScoreEntries() ?? [];
 
-  const clearAll = useMutation(api.data.clearAll);
+  const clearAll = useOfflineMutation(
+    api.data.clearAll,
+    'data/clearAll',
+    () => ({}),
+  );
   const clearAndImport = useMutation(api.data.clearAndImport);
   const deleteAccount = useMutation(api.data.deleteAccount);
   const upsertConnection = useMutation(api.canvasConnections.upsert);
@@ -249,7 +254,14 @@ export function Settings() {
             Canvas Integration
           </h2>
 
-          {connection ? (
+          {connectionLoading ? (
+            <Card className="p-5 flex flex-col gap-3">
+              <div className="skeleton h-5 w-40 rounded" />
+              <div className="skeleton h-4 w-full rounded" />
+              <div className="skeleton h-10 w-full rounded-(--radius-r2)" />
+              <div className="skeleton h-10 w-36 rounded-full" />
+            </Card>
+          ) : connection ? (
             <Card className="divide-y divide-(--c-line)">
               <div className="p-4 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-(--c-grade-a)/15 flex items-center justify-center shrink-0">
