@@ -3,7 +3,7 @@ import {
 } from 'react';
 import { useQuery, useConvex } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { localDb } from '@/lib/localDb';
+import { localDb, clearAllLocalData } from '@/lib/localDb';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { getPendingCount } from '@/lib/offlineQueue';
 import type { Semester, Course, Criterion, ScoreEntry } from '@/db/schema';
@@ -82,23 +82,25 @@ function useWithLocalFallback<T>(
   convexData: T[] | undefined,
   loadLocal: () => Promise<T[]>,
   saveLocal: (data: T[]) => Promise<void>,
+  resetKey: number
 ): T[] | undefined {
   const [local, setLocal] = useState<T[] | undefined>(undefined);
-  const loadedRef = useRef(false);
+  const loadedKey = useRef(-1);
 
   useEffect(() => {
-    if (!loadedRef.current) {
-      loadedRef.current = true;
+    if (loadedKey.current !== resetKey) {
+      loadedKey.current = resetKey;
+      setLocal(undefined);
       loadLocal().then(d => { if (d.length > 0) setLocal(d); });
     }
-  }, []);
+  }, [resetKey, loadLocal]);
 
   useEffect(() => {
     if (convexData !== undefined) {
       setLocal(convexData);
       saveLocal(convexData).catch(console.error);
     }
-  }, [convexData]);
+  }, [convexData, saveLocal]);
 
   return convexData ?? local;
 }
@@ -107,6 +109,21 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const isOnline = useOnlineStatus();
   const convex = useConvex();
   const [pendingCount, setPendingCount] = useState(0);
+  const { isLoaded, user } = useUser();
+
+  const userId = user?.id;
+  const prevUserId = useRef(userId);
+  const [resetKey, setResetKey] = useState(0);
+
+  useEffect(() => {
+    if (isLoaded && prevUserId.current !== userId) {
+      if (!userId) {
+        clearAllLocalData().catch(console.error);
+      }
+      setResetKey(k => k + 1);
+      prevUserId.current = userId;
+    }
+  }, [isLoaded, userId]);
 
   const convexSemesters = useQuery(api.semesters.list);
   const convexCourses = useQuery(api.courses.list);
@@ -134,21 +151,25 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     mappedSemesters,
     () => localDb.semesters.toArray(),
     data => localDb.semesters.bulkPut(data).then(() => undefined),
+    resetKey
   );
   const courses = useWithLocalFallback(
     mappedCourses,
     () => localDb.courses.toArray(),
     data => localDb.courses.bulkPut(data).then(() => undefined),
+    resetKey
   );
   const criteria = useWithLocalFallback(
     mappedCriteria,
     () => localDb.criteria.toArray(),
     data => localDb.criteria.bulkPut(data).then(() => undefined),
+    resetKey
   );
   const scoreEntries = useWithLocalFallback(
     mappedEntries,
     () => localDb.scoreEntries.toArray(),
     data => localDb.scoreEntries.bulkPut(data).then(() => undefined),
+    resetKey
   );
 
   const refreshPendingCount = useCallback(() => {
