@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconChevronRight, IconPlus } from '@/components/icons';
 import { motion } from 'framer-motion';
@@ -9,10 +10,11 @@ import { useCourses } from '@/hooks/useCourses';
 import { useCriteria } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import {
-  cumulativeGPA, semesterGPA, gpaHistory, honorFor,
+  cumulativeGPA, semesterGPA, gpaHistory, honorFor, courseRunningGrade, letterFor
 } from '@/lib/calculations';
-import { fmtGPA, displayCourseName } from '@/lib/utils';
+import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
+import { GradePill } from '@/components/ui/GradePill';
 
 const rowItem = {
   hidden: { opacity: 0, x: -6 },
@@ -126,6 +128,17 @@ export function Dashboard() {
   const rawCriteria = useCriteria();
   const rawEntries = useScoreEntries();
 
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  function toggleOpen(id: string) {
+    setOpenIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   if (rawSemesters === undefined || rawCourses === undefined) return <DashboardSkeleton />;
 
   const semesters = rawSemesters;
@@ -148,6 +161,20 @@ export function Dashboard() {
   const history = gpaHistory(semesters, allCourses, criteria, entries);
   const honor = honorFor(cumulative.gpa);
 
+  let heroStyle: React.CSSProperties = {};
+  let honorIconColor = 'rgba(255,255,255,0.9)';
+  
+  if (honor === 'Summa Cum Laude') {
+    heroStyle.background = 'linear-gradient(135deg, oklch(0.55 0.18 80) 0%, oklch(0.35 0.15 75) 100%)';
+    honorIconColor = 'oklch(0.85 0.15 85)';
+  } else if (honor === 'Magna Cum Laude') {
+    heroStyle.background = 'linear-gradient(135deg, oklch(0.50 0.06 250) 0%, oklch(0.35 0.04 250) 100%)';
+    honorIconColor = 'oklch(0.85 0.03 250)';
+  } else if (honor === 'Cum Laude') {
+    heroStyle.background = 'linear-gradient(135deg, oklch(0.48 0.12 40) 0%, oklch(0.33 0.10 35) 100%)';
+    honorIconColor = 'oklch(0.80 0.12 50)';
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar title="Dashboard" onMenuOpen={onMenuOpen} />
@@ -159,7 +186,7 @@ export function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="hero-card">
+          <div className="hero-card" style={heroStyle}>
             {/* Mobile layout */}
             <div className="sm:hidden relative z-10 flex flex-col gap-3">
               <div>
@@ -171,7 +198,7 @@ export function Dashboard() {
                 </div>
                 {honor && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '3px 10px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: honorIconColor }}>✦ {honor}</span>
                   </div>
                 )}
               </div>
@@ -199,7 +226,7 @@ export function Dashboard() {
                   </div>
                   {honor && (
                     <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '2px 10px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: honorIconColor }}>✦ {honor}</span>
                     </div>
                   )}
                 </div>
@@ -326,29 +353,74 @@ export function Dashboard() {
                 View all
               </Button>
             </div>
-            <div className="c-card overflow-hidden">
+            <div className="c-acc">
               {pastSemesters.map((sem, i) => {
                 const { gpa, credits } = semesterGPA(sem.id, allCourses, criteria, entries);
+                const semCourses = allCourses.filter(c => c.semesterId === sem.id);
+                const isOpen = openIds.has(sem.id);
+
                 return (
-                  <motion.button
+                  <motion.div
                     key={sem.id}
                     custom={i}
                     variants={rowItem}
                     initial="hidden"
                     animate="show"
-                    className="w-full flex items-center gap-3 px-5 py-4 hover:bg-(--c-surface-2) transition-colors text-left cursor-pointer"
-                    style={{ borderTop: i > 0 ? '1px solid var(--c-line)' : 'none' }}
-                    onClick={() => navigate(`/semesters/${sem.id}`)}
                   >
-                    <div className="flex-1 min-w-0">
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)' }}>{sem.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 1 }}>{credits} credits</div>
+                    <div
+                      className={`c-acc-row ${isOpen ? 'open' : ''}`}
+                      onClick={() => toggleOpen(sem.id)}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}>
+                          {sem.name}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--c-text-3)', marginTop: 1 }}>{credits} credits</div>
+                      </div>
+
+                      <div className="c-bignum" style={{ fontSize: 24, textAlign: 'right' }}>
+                        {fmtGPA(gpa)}
+                      </div>
+
+                      <IconChevronRight size={16} className="chev" />
                     </div>
-                    <div className="text-[18px] font-semibold tabular-nums text-(--c-text)" style={{ letterSpacing: '-0.02em' }}>
-                      {fmtGPA(gpa)}
+
+                    <div className={`c-acc-panel ${isOpen ? 'open' : ''}`}>
+                      <div className="inner">
+                        <div className="c-acc-courses" style={{ borderTop: 'none' }}>
+                          {semCourses.length === 0 ? (
+                            <div style={{ padding: '14px 20px', color: 'var(--c-text-4)', fontSize: 13, background: 'var(--c-surface-2)' }}>
+                              No courses
+                            </div>
+                          ) : (
+                            semCourses.map(course => {
+                              const cc = criteria.filter(cr => cr.courseId === course.id);
+                              const ce = entries.filter(e => cc.some(cr => cr.id === e.criterionId));
+                              const { pct } = courseRunningGrade(course, cc, ce);
+                              const letter = pct !== null ? letterFor(pct) : '—';
+
+                              return (
+                                <div
+                                  key={course.id}
+                                  className="c-acc-course"
+                                  onClick={e => { e.stopPropagation(); navigate(`/courses/${course.id}`); }}
+                                  style={{ background: 'var(--c-surface-2)', borderTop: '1px solid var(--c-line)' }}
+                                >
+                                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--c-text)', minWidth: 0 }} className="truncate">
+                                    {displayCourseName(course, showShortNames)}
+                                  </span>
+                                  <span style={{ fontSize: 13, fontFamily: 'var(--f-mono)', fontVariantNumeric: 'tabular-nums', color: 'var(--c-text-3)' }}>
+                                    {fmtPct(pct, 1)}
+                                  </span>
+                                  <GradePill letter={letter} size="sm" />
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <IconChevronRight size={14} className="text-(--c-text-4)" />
-                  </motion.button>
+                  </motion.div>
                 );
               })}
             </div>
