@@ -62,6 +62,7 @@ interface SyncContextValue {
   scoreEntries: ScoreEntry[] | undefined;
   isOnline: boolean;
   pendingCount: number;
+  isDataReady: boolean;
   refreshPendingCount: () => void;
 }
 
@@ -72,6 +73,7 @@ const SyncContext = createContext<SyncContextValue>({
   scoreEntries: undefined,
   isOnline: true,
   pendingCount: 0,
+  isDataReady: false,
   refreshPendingCount: () => {},
 });
 
@@ -83,7 +85,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 function syncTable<T extends { id: string }>(table: any, data: T[]) {
   return localDb.transaction('rw', table, async () => {
-    const existing = await table.keys();
+    // Some Dexie versions/configurations don't support table.keys() directly.
+    // toCollection().primaryKeys() is the standard way to get all primary keys.
+    const existing = await table.toCollection().primaryKeys();
     const newIds = new Set(data.map(d => d.id));
     const toDelete = existing.filter((id: any) => !newIds.has(id));
     if (toDelete.length > 0) {
@@ -184,6 +188,22 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     return [...rawCourses].sort((a, b) => a.name.localeCompare(b.name));
   }, [rawCourses]);
 
+  // Track whether all data collections have resolved at least once.
+  // Once true it stays true for the lifetime of the provider so the spinner
+  // never reappears after the initial load (e.g. during a live update).
+  const [isDataReady, setIsDataReady] = useState(false);
+  useEffect(() => {
+    if (
+      !isDataReady &&
+      semesters !== undefined &&
+      courses !== undefined &&
+      criteria !== undefined &&
+      scoreEntries !== undefined
+    ) {
+      setIsDataReady(true);
+    }
+  }, [isDataReady, semesters, courses, criteria, scoreEntries]);
+
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
   }, []);
@@ -202,7 +222,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [isOnline, convex, refreshPendingCount]);
 
   return (
-    <SyncContext.Provider value={{ semesters, courses, criteria, scoreEntries, isOnline, pendingCount, refreshPendingCount }}>
+    <SyncContext.Provider value={{ semesters, courses, criteria, scoreEntries, isOnline, pendingCount, isDataReady, refreshPendingCount }}>
       {children}
     </SyncContext.Provider>
   );

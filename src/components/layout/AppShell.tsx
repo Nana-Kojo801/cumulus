@@ -82,7 +82,7 @@ export function AppShell() {
       posthog?.reset();
     }
   }, [isSignedIn, clerkUser, clerkLoaded, posthog]);
-  const { isOnline, pendingCount } = useSyncContext();
+  const { isOnline, pendingCount, isDataReady } = useSyncContext();
   const browserOnline = useOnlineStatus();
 
   const [cachedUser, setCachedUser] = useState<{ onboardingComplete: boolean } | null>(() => {
@@ -146,6 +146,8 @@ export function AppShell() {
   const effectiveUser = convexUser ?? cachedUser;
   if (convexUser === undefined && !cachedUser) return <LoadingSpinner />;
   if (!effectiveUser || !effectiveUser.onboardingComplete) return <OnboardingScreen />;
+
+  if (!isDataReady) return <LoadingSpinner />;
 
   const isMobile = width <= 640;
   const isTablet = width > 640 && width <= 900;
