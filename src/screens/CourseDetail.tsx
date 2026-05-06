@@ -62,6 +62,14 @@ export function CourseDetail() {
   const allEntries = useScoreEntries() ?? [];
   const entries = allEntries.filter(e => criteria.some(cr => cr.id === e.criterionId));
 
+  const [pendingCourseUpdates, setPendingCourseUpdates] = useState<Partial<Course>>({});
+  
+  useEffect(() => {
+    setPendingCourseUpdates({});
+  }, [course?.manualGradeEnabled, course?.manualGrade]);
+
+  const effectiveCourse = course ? { ...course, ...pendingCourseUpdates } as Course : undefined;
+
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showCriterionModal, setShowCriterionModal] = useState(false);
   const [editingCriterion, setEditingCriterion] = useState<Criterion | undefined>();
@@ -73,7 +81,7 @@ export function CourseDetail() {
   const scoringCriterionRef = useRef<Criterion | undefined>(undefined);
   if (scoringCriterion) scoringCriterionRef.current = scoringCriterion;
 
-  if (!course) {
+  if (!effectiveCourse) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
         <Topbar title="" back="Semesters" onMenuOpen={onMenuOpen} />
@@ -89,7 +97,7 @@ export function CourseDetail() {
     );
   }
 
-  const { pct, weightCompleted } = courseRunningGrade(course, criteria, entries);
+  const { pct, weightCompleted } = courseRunningGrade(effectiveCourse, criteria, entries);
   const letter = pct !== null ? letterFor(pct) : null;
   const gradeBand = letter ? bandFor(letter) : null;
 
@@ -117,12 +125,12 @@ export function CourseDetail() {
     toast('Criterion deleted');
   }
 
-  const isLocked = !!course.manualGradeEnabled;
+  const isLocked = !!effectiveCourse.manualGradeEnabled;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
-        title={displayCourseName(course, showShortNames)}
+        title={displayCourseName(effectiveCourse, showShortNames)}
         back={semester?.name ?? 'Semesters'}
         onMenuOpen={onMenuOpen}
         actions={
@@ -137,12 +145,12 @@ export function CourseDetail() {
           <div className="flex items-start gap-3 flex-wrap">
             <div className="flex-1 min-w-0">
               <h1 className="text-[22px] font-medium text-(--c-text)" style={{ letterSpacing: '-0.018em' }}>
-                {displayCourseName(course, showShortNames)}
+                {displayCourseName(effectiveCourse, showShortNames)}
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <Chip>{course.credits} credits</Chip>
+            <Chip>{effectiveCourse.credits} credits</Chip>
             {letter && <GradePill letter={letter} size="lg" />}
           </div>
           <div
@@ -191,25 +199,33 @@ export function CourseDetail() {
               <div className="text-[12px] text-(--c-text-3)">Manually set the final course percentage, ignoring all criteria.</div>
             </div>
             <button 
-              onClick={() => updateCourse({ id: course.id, manualGradeEnabled: !course.manualGradeEnabled })}
+              onClick={() => {
+                const nextState = !effectiveCourse.manualGradeEnabled;
+                setPendingCourseUpdates(prev => ({ ...prev, manualGradeEnabled: nextState }));
+                updateCourse({ id: effectiveCourse.id, manualGradeEnabled: nextState });
+              }}
               className={cn(
                 "w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer", 
-                course.manualGradeEnabled ? "bg-(--c-accent)" : "bg-(--c-surface-3)"
+                effectiveCourse.manualGradeEnabled ? "bg-(--c-accent)" : "bg-(--c-surface-3)"
               )}
             >
               <div className={cn(
                 "w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform",
-                course.manualGradeEnabled ? "left-[22px]" : "left-[2px]"
+                effectiveCourse.manualGradeEnabled ? "left-[22px]" : "left-[2px]"
               )} />
             </button>
           </div>
-          {course.manualGradeEnabled && (
+          {effectiveCourse.manualGradeEnabled && (
             <div className="pt-3 border-t border-(--c-line) flex flex-col gap-2">
               <div className="text-[12px] font-medium text-(--c-text)">Final Grade</div>
               <div className="max-w-[200px]">
                 <Select
-                  value={course.manualGrade?.toString() ?? ''}
-                  onValueChange={(val) => updateCourse({ id: course.id, manualGrade: parseFloat(val) })}
+                  value={effectiveCourse.manualGrade?.toString() ?? ''}
+                  onValueChange={(val) => {
+                    const nextGrade = parseFloat(val);
+                    setPendingCourseUpdates(prev => ({ ...prev, manualGrade: nextGrade }));
+                    updateCourse({ id: effectiveCourse.id, manualGrade: nextGrade });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a grade..." />
@@ -351,7 +367,7 @@ export function CourseDetail() {
       <CriterionModal
         open={showCriterionModal}
         onClose={() => { setShowCriterionModal(false); setEditingCriterion(undefined); }}
-        courseId={course.id}
+        courseId={effectiveCourse.id}
         existingCriteria={criteria}
         editing={editingCriterion}
       />
@@ -361,7 +377,7 @@ export function CourseDetail() {
           open={!!scoringCriterionId}
           onClose={() => setScoringCriterionId(null)}
           criterion={scoringCriterionRef.current}
-          course={course}
+          course={effectiveCourse}
           entries={entries.filter(e => e.criterionId === (scoringCriterionId ?? scoringCriterionRef.current?.id))}
         />
       )}
@@ -369,7 +385,7 @@ export function CourseDetail() {
       <WhatScoreModal
         open={showWhatScore}
         onClose={() => setShowWhatScore(false)}
-        course={course}
+        course={effectiveCourse}
         criteria={criteria}
         entries={entries}
       />
