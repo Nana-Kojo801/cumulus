@@ -65,6 +65,8 @@ export const update = mutation({
     shortName: v.optional(v.string()),
     credits: v.optional(v.number()),
     semesterId: v.optional(v.string()),
+    manualGrade: v.optional(v.number()),
+    manualGradeEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, semesterId, ...rest } = args;

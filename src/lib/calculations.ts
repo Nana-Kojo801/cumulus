@@ -12,10 +12,14 @@ export function criterionAverage(entries: ScoreEntry[]): number | null {
 }
 
 export function courseRunningGrade(
-  _course: Course,
+  course: Course,
   criteria: Criterion[],
   entries: ScoreEntry[]
 ): { pct: number | null; weightCompleted: number } {
+  if (course.manualGradeEnabled && course.manualGrade !== undefined) {
+    return { pct: course.manualGrade, weightCompleted: 100 };
+  }
+
   let weightedSum = 0;
   let weightCompleted = 0;
 
