@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IconPlus, IconEdit, IconTrash, IconTarget } from '@/components/icons';
 import { Topbar } from '@/components/layout/Topbar';
@@ -24,7 +24,7 @@ import { fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { api } from '../../convex/_generated/api';
 import { usePostHog } from '@posthog/react';
-import type { Criterion } from '@/db/schema';
+import type { Criterion, Course } from '@/db/schema';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import { useOfflineMutation } from '@/lib/useOfflineMutation';
@@ -201,7 +201,7 @@ export function CourseDetail() {
             <button 
               onClick={() => {
                 const nextState = !effectiveCourse.manualGradeEnabled;
-                setPendingCourseUpdates(prev => ({ ...prev, manualGradeEnabled: nextState }));
+                setPendingCourseUpdates((prev: Partial<Course>) => ({ ...prev, manualGradeEnabled: nextState }));
                 updateCourse({ id: effectiveCourse.id, manualGradeEnabled: nextState });
               }}
               className={cn(
@@ -223,7 +223,7 @@ export function CourseDetail() {
                   value={effectiveCourse.manualGrade?.toString() ?? ''}
                   onValueChange={(val) => {
                     const nextGrade = parseFloat(val);
-                    setPendingCourseUpdates(prev => ({ ...prev, manualGrade: nextGrade }));
+                    setPendingCourseUpdates((prev: Partial<Course>) => ({ ...prev, manualGrade: nextGrade }));
                     updateCourse({ id: effectiveCourse.id, manualGrade: nextGrade });
                   }}
                 >
