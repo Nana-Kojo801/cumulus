@@ -15,6 +15,7 @@ import {
 import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { GradePill } from '@/components/ui/GradePill';
+import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 
 const rowItem = {
   hidden: { opacity: 0, x: -6 },
@@ -129,6 +130,7 @@ export function Dashboard() {
   const rawEntries = useScoreEntries();
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [showAddCourse, setShowAddCourse] = useState(false);
 
   function toggleOpen(id: string) {
     setOpenIds(prev => {
@@ -297,7 +299,7 @@ export function Dashboard() {
                 No courses yet
               </div>
               <p style={{ fontSize: 13, marginBottom: 18 }}>Add courses to start tracking your GPA.</p>
-              <Button variant="primary" size="sm" onClick={() => navigate('/courses/new')}>
+              <Button variant="primary" size="sm" onClick={() => setShowAddCourse(true)}>
                 <IconPlus size={14} /> Add Course
               </Button>
             </div>
@@ -413,6 +415,13 @@ export function Dashboard() {
           </motion.section>
         )}
       </div>
+
+      <CourseEditSheet
+        open={showAddCourse}
+        onClose={() => setShowAddCourse(false)}
+        semesterId={activeSemester?.id}
+        onSaved={newId => navigate(`/courses/${newId}`)}
+      />
     </div>
   );
 }

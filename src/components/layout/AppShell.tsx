@@ -223,7 +223,7 @@ function MobileTabBar() {
     <nav
       className="fixed bottom-0 inset-x-0 z-30 flex"
       style={{
-        background: 'var(--c-surface)',
+        background: 'oklch(from var(--c-surface) l c h / 0.85)',
         borderTop: '1px solid var(--c-line)',
         borderRadius: '20px 20px 0 0',
         boxShadow: '0 -4px 28px oklch(0 0 0 / 0.10)',

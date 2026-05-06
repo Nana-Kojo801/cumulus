@@ -173,12 +173,27 @@
 html, body, #root {
   height: 100%;
   font-family: var(--f-ui);
-  background-color: var(--c-bg);
   color: var(--c-text);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum", "ss01";
+}
+
+body {
+  background-color: var(--c-bg);
+}
+
+@keyframes bg-breathe {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+html[data-honor] body {
+  background: linear-gradient(135deg, var(--c-bg) 0%, var(--c-bg-2) 100%);
+  background-size: 200% 200%;
+  animation: bg-breathe 15s ease infinite;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
@@ -439,7 +454,9 @@ input[type=number] { -moz-appearance: textfield; }
 
 /* ─── Sidebar ─────────────────────────────────────────────────────────────────── */
 .c-side {
-  background: var(--c-bg-2);
+  background: oklch(from var(--c-bg-2) l c h / 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--c-line);
 }
 
