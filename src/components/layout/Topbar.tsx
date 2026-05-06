@@ -26,21 +26,21 @@ export function Topbar({ title, back, actions }: TopbarProps) {
           <>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1 shrink-0 cursor-pointer -ml-2 px-2 min-h-11 rounded-[10px] hover:bg-(--c-surface-2) transition-colors"
+              className="flex items-center justify-center shrink-0 cursor-pointer -ml-2 w-10 h-10 rounded-[10px] hover:bg-(--c-surface-2) transition-colors"
               style={{ color: 'var(--c-text-3)' }}
+              title="Go back"
             >
-              <IconChevronLeft size={18} strokeWidth={2.2} />
-              <span
-                className="max-w-20 sm:max-w-40 truncate leading-none"
-                style={{ fontSize: 13, fontWeight: 600 }}
-              >
-                {back}
-              </span>
+              <IconChevronLeft size={20} strokeWidth={2.5} />
             </button>
-            <span className="text-(--c-line-2) text-[14px] shrink-0 select-none mx-0.5">/</span>
             <span
-              className="truncate min-w-0"
-              style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-text)', letterSpacing: '-0.01em' }}
+              className="truncate min-w-0 ml-1"
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: 'var(--c-text)',
+                letterSpacing: '-0.02em',
+                fontFamily: 'var(--f-ui)',
+              }}
             >
               {title}
             </span>
