@@ -161,20 +161,6 @@ export function Dashboard() {
   const history = gpaHistory(semesters, allCourses, criteria, entries);
   const honor = honorFor(cumulative.gpa);
 
-  let heroStyle: React.CSSProperties = {};
-  let honorIconColor = 'rgba(255,255,255,0.9)';
-  
-  if (honor === 'Summa Cum Laude') {
-    heroStyle.background = 'linear-gradient(135deg, oklch(0.55 0.18 80) 0%, oklch(0.35 0.15 75) 100%)';
-    honorIconColor = 'oklch(0.85 0.15 85)';
-  } else if (honor === 'Magna Cum Laude') {
-    heroStyle.background = 'linear-gradient(135deg, oklch(0.50 0.06 250) 0%, oklch(0.35 0.04 250) 100%)';
-    honorIconColor = 'oklch(0.85 0.03 250)';
-  } else if (honor === 'Cum Laude') {
-    heroStyle.background = 'linear-gradient(135deg, oklch(0.48 0.12 40) 0%, oklch(0.33 0.10 35) 100%)';
-    honorIconColor = 'oklch(0.80 0.12 50)';
-  }
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar title="Dashboard" onMenuOpen={onMenuOpen} />
@@ -186,7 +172,7 @@ export function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="hero-card" style={heroStyle}>
+          <div className="hero-card">
             {/* Mobile layout */}
             <div className="sm:hidden relative z-10 flex flex-col gap-3">
               <div>
@@ -198,7 +184,7 @@ export function Dashboard() {
                 </div>
                 {honor && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '3px 10px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: honorIconColor }}>✦ {honor}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
                   </div>
                 )}
               </div>
@@ -226,7 +212,7 @@ export function Dashboard() {
                   </div>
                   {honor && (
                     <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 999, padding: '2px 10px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: honorIconColor }}>✦ {honor}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'rgba(255,255,255,0.9)' }}>✦ {honor}</span>
                     </div>
                   )}
                 </div>

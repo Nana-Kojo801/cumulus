@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useSyncContext } from '@/contexts/SyncContext';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { clearAllLocalData, hasAnyLocalData, localDb } from '@/lib/localDb';
+import { cumulativeGPA, honorFor } from '@/lib/calculations';
 
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
@@ -148,6 +149,17 @@ export function AppShell() {
   if (!effectiveUser || !effectiveUser.onboardingComplete) return <OnboardingScreen />;
 
   if (!isDataReady) return <LoadingSpinner />;
+
+  // Set global honor theme
+  const { semesters, courses, criteria, scoreEntries } = useSyncContext();
+  if (semesters && courses && criteria && scoreEntries) {
+    const { gpa } = cumulativeGPA(semesters, courses, criteria, scoreEntries);
+    const honor = honorFor(gpa);
+    if (honor === 'Summa Cum Laude') document.documentElement.setAttribute('data-honor', 'summa');
+    else if (honor === 'Magna Cum Laude') document.documentElement.setAttribute('data-honor', 'magna');
+    else if (honor === 'Cum Laude') document.documentElement.setAttribute('data-honor', 'cumlaude');
+    else document.documentElement.removeAttribute('data-honor');
+  }
 
   const isMobile = width <= 640;
   const isTablet = width > 640 && width <= 900;
