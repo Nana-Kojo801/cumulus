@@ -28,6 +28,8 @@ function mapCourse(doc: Record<string, unknown>): Course {
     shortName: doc.shortName as string | undefined,
     credits: doc.credits as number,
     canvasId: doc.canvasId as number | undefined,
+    manualGrade: doc.manualGrade as number | undefined,
+    manualGradeEnabled: doc.manualGradeEnabled as boolean | undefined,
     createdAt: doc.createdAt as number,
   };
 }
@@ -293,8 +295,11 @@ async function replayPendingMutations(convex: ReturnType<typeof useConvex>): Pro
           id: a.id as string,
           name: a.name as string,
           code: a.code as string,
+          shortName: a.shortName as string | undefined,
           credits: a.credits as number,
           semesterId: a.semesterId as string,
+          manualGrade: a.manualGrade as number | undefined,
+          manualGradeEnabled: a.manualGradeEnabled as boolean | undefined,
         });
       }
       else if (name === 'courses/remove') {

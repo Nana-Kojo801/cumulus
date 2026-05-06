@@ -12,13 +12,14 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CriterionModal } from '@/components/modals/CriterionModal';
 import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
 import { ScoreEntryModal } from '@/components/modals/ScoreEntryModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
 import { WhatScoreModal } from '@/components/modals/WhatScoreModal';
 import { useCourse } from '@/hooks/useCourses';
 import { useSemester } from '@/hooks/useSemesters';
 import { useCriteriaByCourse } from '@/hooks/useCriteria';
 import { useScoreEntries } from '@/hooks/useScoreEntries';
 import { courseRunningGrade, criterionAverage, letterFor } from '@/lib/calculations';
-import { bandFor } from '@/lib/gradeScale';
+import { bandFor, GRADE_SCALE } from '@/lib/gradeScale';
 import { fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { api } from '../../convex/_generated/api';
@@ -47,6 +48,11 @@ export function CourseDetail() {
   const removeCriterion = useOfflineMutation(
     api.criteria.remove,
     'criteria/remove',
+    (args) => args,
+  );
+  const updateCourse = useOfflineMutation(
+    api.courses.update,
+    'courses/update',
     (args) => args,
   );
 
@@ -111,6 +117,8 @@ export function CourseDetail() {
     toast('Criterion deleted');
   }
 
+  const isLocked = !!course.manualGradeEnabled;
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Topbar
@@ -149,7 +157,7 @@ export function CourseDetail() {
           </div>
         </div>
 
-        {criteria.length > 0 && (
+        {!isLocked && criteria.length > 0 && (
           <Card className="p-4 flex flex-col gap-4">
             <h3 className="text-[14px] font-medium text-(--c-text)">Grade Forecast</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -176,10 +184,53 @@ export function CourseDetail() {
           </Card>
         )}
 
+        <Card className="p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="pr-4">
+              <div className="text-[14px] font-medium text-(--c-text)">Override Final Grade</div>
+              <div className="text-[12px] text-(--c-text-3)">Manually set the final course percentage, ignoring all criteria.</div>
+            </div>
+            <button 
+              onClick={() => updateCourse({ id: course.id, manualGradeEnabled: !course.manualGradeEnabled })}
+              className={cn(
+                "w-11 h-6 rounded-full transition-colors relative shrink-0 cursor-pointer", 
+                course.manualGradeEnabled ? "bg-(--c-accent)" : "bg-(--c-surface-3)"
+              )}
+            >
+              <div className={cn(
+                "w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform",
+                course.manualGradeEnabled ? "left-[22px]" : "left-[2px]"
+              )} />
+            </button>
+          </div>
+          {course.manualGradeEnabled && (
+            <div className="pt-3 border-t border-(--c-line) flex flex-col gap-2">
+              <div className="text-[12px] font-medium text-(--c-text)">Final Grade</div>
+              <div className="max-w-[200px]">
+                <Select
+                  value={course.manualGrade?.toString() ?? ''}
+                  onValueChange={(val) => updateCourse({ id: course.id, manualGrade: parseFloat(val) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a grade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_SCALE.map(g => (
+                      <SelectItem key={g.letter} value={g.min.toString()}>
+                        {g.letter} ({g.points.toFixed(1)} pts)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+        </Card>
+
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-medium text-(--c-text)">Evaluation Criteria</h2>
-            <Button variant="ghost" size="sm" onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
+            <Button variant="ghost" size="sm" disabled={isLocked} onClick={() => { setEditingCriterion(undefined); setShowCriterionModal(true); }}>
               <IconPlus size={13} /> Add Criterion
             </Button>
           </div>
@@ -220,20 +271,22 @@ export function CourseDetail() {
                         </span>
                         <div className="flex items-center gap-1">
                           <button
-                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
+                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLocked}
                             onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                           >
                             <IconEdit size={13} />
                           </button>
                           <button
-                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
+                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLocked}
                             onClick={() => setDeleteCritId(crit.id)}
                           >
                             <IconTrash size={13} />
                           </button>
                         </div>
                       </div>
-                      <Button variant="primary" size="sm" className="w-full" onClick={() => setScoringCriterionId(crit.id)}>
+                      <Button variant="primary" size="sm" className="w-full" disabled={isLocked} onClick={() => setScoringCriterionId(crit.id)}>
                         Score
                       </Button>
                     </div>
@@ -257,15 +310,17 @@ export function CourseDetail() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Button variant="default" size="sm" onClick={() => setScoringCriterionId(crit.id)}>Score</Button>
+                        <Button variant="default" size="sm" disabled={isLocked} onClick={() => setScoringCriterionId(crit.id)}>Score</Button>
                         <button
-                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer"
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isLocked}
                           onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
                         >
                           <IconEdit size={13} />
                         </button>
                         <button
-                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer"
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isLocked}
                           onClick={() => setDeleteCritId(crit.id)}
                         >
                           <IconTrash size={13} />

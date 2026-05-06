@@ -25,6 +25,8 @@ export default defineSchema({
     shortName: v.optional(v.string()),
     credits: v.number(),
     canvasId: v.optional(v.number()),
+    manualGrade: v.optional(v.number()),
+    manualGradeEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index('by_userId', ['userId'])

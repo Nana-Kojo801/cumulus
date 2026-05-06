@@ -15,6 +15,8 @@ export interface Course {
   shortName?: string;
   credits: number;
   canvasId?: number;
+  manualGrade?: number;
+  manualGradeEnabled?: boolean;
   createdAt: number;
 }
 
