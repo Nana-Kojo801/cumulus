@@ -93,11 +93,25 @@
 
 /* Cum Laude (Bronze) */
 [data-honor="cumlaude"] {
+  --c-bg:        oklch(0.11 0.015 45);
+  --c-bg-2:      oklch(0.14 0.018 45);
+  --c-surface:   oklch(0.17 0.020 45);
+  --c-surface-2: oklch(0.21 0.022 45);
+  --c-surface-3: oklch(0.26 0.024 45);
+  --c-topbar-bg: oklch(0.13 0.016 45 / 0.94);
+  
   --c-accent:    oklch(0.65 0.12 50);
   --c-accent-2:  oklch(0.55 0.14 50);
   --c-accent-bg: oklch(0.65 0.12 50 / 0.15);
 }
 [data-theme="light"][data-honor="cumlaude"] {
+  --c-bg:        oklch(0.97 0.010 45);
+  --c-bg-2:      oklch(0.94 0.012 45);
+  --c-surface:   oklch(0.99 0.003 45);
+  --c-surface-2: oklch(0.94 0.008 45);
+  --c-surface-3: oklch(0.90 0.012 45);
+  --c-topbar-bg: oklch(0.97 0.010 45 / 0.92);
+
   --c-accent:    oklch(0.45 0.10 50);
   --c-accent-2:  oklch(0.35 0.12 50);
   --c-accent-bg: oklch(0.45 0.10 50 / 0.10);
@@ -105,11 +119,25 @@
 
 /* Magna Cum Laude (Silver) */
 [data-honor="magna"] {
+  --c-bg:        oklch(0.11 0.015 250);
+  --c-bg-2:      oklch(0.14 0.018 250);
+  --c-surface:   oklch(0.17 0.020 250);
+  --c-surface-2: oklch(0.21 0.022 250);
+  --c-surface-3: oklch(0.26 0.024 250);
+  --c-topbar-bg: oklch(0.13 0.016 250 / 0.94);
+
   --c-accent:    oklch(0.70 0.05 250);
   --c-accent-2:  oklch(0.60 0.06 250);
   --c-accent-bg: oklch(0.70 0.05 250 / 0.15);
 }
 [data-theme="light"][data-honor="magna"] {
+  --c-bg:        oklch(0.97 0.010 250);
+  --c-bg-2:      oklch(0.94 0.012 250);
+  --c-surface:   oklch(0.99 0.003 250);
+  --c-surface-2: oklch(0.94 0.008 250);
+  --c-surface-3: oklch(0.90 0.012 250);
+  --c-topbar-bg: oklch(0.97 0.010 250 / 0.92);
+
   --c-accent:    oklch(0.50 0.04 250);
   --c-accent-2:  oklch(0.40 0.05 250);
   --c-accent-bg: oklch(0.50 0.04 250 / 0.10);
@@ -117,11 +145,25 @@
 
 /* Summa Cum Laude (Gold) */
 [data-honor="summa"] {
+  --c-bg:        oklch(0.11 0.020 85);
+  --c-bg-2:      oklch(0.14 0.022 85);
+  --c-surface:   oklch(0.17 0.024 85);
+  --c-surface-2: oklch(0.21 0.026 85);
+  --c-surface-3: oklch(0.26 0.028 85);
+  --c-topbar-bg: oklch(0.13 0.021 85 / 0.94);
+
   --c-accent:    oklch(0.75 0.15 85);
   --c-accent-2:  oklch(0.65 0.16 85);
   --c-accent-bg: oklch(0.75 0.15 85 / 0.15);
 }
 [data-theme="light"][data-honor="summa"] {
+  --c-bg:        oklch(0.97 0.015 85);
+  --c-bg-2:      oklch(0.94 0.018 85);
+  --c-surface:   oklch(0.99 0.005 85);
+  --c-surface-2: oklch(0.94 0.010 85);
+  --c-surface-3: oklch(0.90 0.015 85);
+  --c-topbar-bg: oklch(0.97 0.015 85 / 0.92);
+
   --c-accent:    oklch(0.55 0.14 80);
   --c-accent-2:  oklch(0.45 0.16 80);
   --c-accent-bg: oklch(0.55 0.14 80 / 0.10);
