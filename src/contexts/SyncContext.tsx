@@ -104,7 +104,8 @@ function useWithLocalFallback<T extends { id: string }>(
   localData: T[] | undefined,
   table: any,
   isOnline: boolean,
-  pendingCount: number | null
+  pendingCount: number | null,
+  initialLoadDone: boolean,
 ): T[] | undefined {
   useEffect(() => {
     if (convexData !== undefined && pendingCount === 0) {
@@ -112,8 +113,7 @@ function useWithLocalFallback<T extends { id: string }>(
     }
   }, [convexData, pendingCount, table]);
 
-  // If we don't know the pending count yet, we aren't ready to decide
-  // between local and remote data.
+  // Don't decide anything until we know the pending queue size.
   if (pendingCount === null) {
     return undefined;
   }
@@ -121,13 +121,14 @@ function useWithLocalFallback<T extends { id: string }>(
   if (!isOnline || pendingCount > 0) {
     return localData ?? convexData;
   }
-  
-  // When online, if Convex data hasn't loaded, return undefined to trigger skeleton loaders
-  // instead of showing potentially stale local data or an empty state.
+
   if (convexData === undefined) {
-    return undefined;
+    // Before first load: return undefined so the loading spinner shows.
+    // After first load: Convex is momentarily reconnecting — fall back to local
+    // data (already synced) so we don't flash empty states.
+    return initialLoadDone ? (localData ?? undefined) : undefined;
   }
-  
+
   return convexData;
 }
 
@@ -178,17 +179,22 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const localCriteria = useLiveQuery(() => localDb.criteria.toArray(), [resetKey]);
   const localEntries = useLiveQuery(() => localDb.scoreEntries.toArray(), [resetKey]);
 
+  // Ref that becomes true once every data collection has resolved at least once.
+  // Unlike isDataReady state, this is updated mid-render (safe for refs) so the
+  // NEXT call to useWithLocalFallback immediately gets the updated value.
+  const initialLoadDoneRef = useRef(false);
+
   const semesters = useWithLocalFallback(
-    mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount
+    mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount, initialLoadDoneRef.current
   );
   const rawCourses = useWithLocalFallback(
-    mappedCourses, localCourses, localDb.courses, isOnline, pendingCount
+    mappedCourses, localCourses, localDb.courses, isOnline, pendingCount, initialLoadDoneRef.current
   );
   const criteria = useWithLocalFallback(
-    mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount
+    mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount, initialLoadDoneRef.current
   );
   const scoreEntries = useWithLocalFallback(
-    mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount
+    mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount, initialLoadDoneRef.current
   );
 
   const courses = useMemo(() => {
@@ -197,21 +203,27 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [rawCourses]);
 
   // Track whether all data collections have resolved at least once.
-  // Once true it stays true for the lifetime of the provider so the spinner
-  // never reappears after the initial load (e.g. during a live update).
+  // Once true it stays true for the lifetime of the provider.
   const [isDataReady, setIsDataReady] = useState(false);
+
+  // Update the ref mid-render (valid React pattern for refs) so subsequent
+  // renders within the same cycle benefit immediately.
+  if (
+    !initialLoadDoneRef.current &&
+    pendingCount !== null &&
+    semesters !== undefined &&
+    courses !== undefined &&
+    criteria !== undefined &&
+    scoreEntries !== undefined
+  ) {
+    initialLoadDoneRef.current = true;
+  }
+
   useEffect(() => {
-    if (
-      !isDataReady &&
-      pendingCount !== null &&
-      semesters !== undefined &&
-      courses !== undefined &&
-      criteria !== undefined &&
-      scoreEntries !== undefined
-    ) {
+    if (initialLoadDoneRef.current && !isDataReady) {
       setIsDataReady(true);
     }
-  }, [isDataReady, pendingCount, semesters, courses, criteria, scoreEntries]);
+  }, [isDataReady, semesters, courses, criteria, scoreEntries, pendingCount]);
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
