@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import { Routes, Route, useLocation, NavLink } from 'react-router-dom';
+import { Routes, Route, useLocation, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery } from 'convex/react';
 import { useUser } from '@clerk/clerk-react';
@@ -66,8 +66,31 @@ function LoadingSpinner() {
   );
 }
 
-function AppRoutes() {
+function LoadingRoute() {
+  const { isDataReady } = useSyncContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isDataReady) return;
+    // Wait one frame so the page we're navigating to can read from context
+    // before it becomes visible, eliminating any chance of empty-state flash.
+    const t = requestAnimationFrame(() => navigate('/', { replace: true }));
+    return () => cancelAnimationFrame(t);
+  }, [isDataReady, navigate]);
+
+  return <LoadingSpinner />;
+}
+
+function AppRoutes({ isDataReady }: { isDataReady: boolean }) {
   const location = useLocation();
+
+  // If data is not ready and we're not already on the loading route,
+  // redirect there. Child pages only mount after we navigate back,
+  // guaranteeing they always see fully-resolved context data.
+  if (!isDataReady && location.pathname !== '/loading') {
+    return <Navigate to="/loading" replace />;
+  }
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
@@ -79,6 +102,7 @@ function AppRoutes() {
         transition={{ duration: 0.15 }}
       >
         <Routes location={location}>
+          <Route path="/loading" element={<LoadingRoute />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/semesters" element={<Semesters />} />
           <Route path="/semesters/:id" element={<SemesterDetail />} />
@@ -181,9 +205,6 @@ export function AppShell() {
   // 3. Handle Onboarding
   if (!effectiveUser.onboardingComplete) return <OnboardingScreen />;
 
-  // 4. Wait for Data Sync
-  if (!isDataReady) return <LoadingSpinner />;
-
   // Set global honor theme
   if (semesters && courses && criteria && scoreEntries) {
     const { gpa } = cumulativeGPA(semesters, courses, criteria, scoreEntries);
@@ -199,53 +220,45 @@ export function AppShell() {
 
   return (
     <MenuContext.Provider value={{ open: openMenu }}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="app-content"
-          className="flex flex-col h-full overflow-hidden w-full"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-        >
-          {/* Offline / sync indicator */}
-          <AnimatePresence initial={false}>
-            {(!isOnline || (pendingCount !== null && pendingCount > 0)) && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="z-[500] flex items-center justify-center text-[11px] font-semibold gap-2 shrink-0 overflow-hidden"
-                style={{
-                  background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
-                  color: 'white',
-                }}
-              >
-                <div className="py-1.5 flex items-center gap-2">
-                  {isOnline ? (
-                    <>
-                      <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
-                      Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-2 h-2 rounded-full bg-white/70" />
-                      Offline — changes saved locally
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      <div className="flex flex-col h-full overflow-hidden w-full">
+        {/* Offline / sync indicator */}
+        <AnimatePresence initial={false}>
+          {(!isOnline || (pendingCount !== null && pendingCount > 0)) && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="z-[500] flex items-center justify-center text-[11px] font-semibold gap-2 shrink-0 overflow-hidden"
+              style={{
+                background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
+                color: 'white',
+              }}
+            >
+              <div className="py-1.5 flex items-center gap-2">
+                {isOnline ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
+                    Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-white/70" />
+                    Offline — changes saved locally
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="c-app flex flex-1 overflow-hidden relative" style={{ height: 'auto' }}>
-            {!isMobile && <Sidebar collapsed={isTablet} />}
-            <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
-              <AppRoutes />
-            </main>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+        <div className="c-app flex flex-1 overflow-hidden relative" style={{ height: 'auto' }}>
+          {!isMobile && <Sidebar collapsed={isTablet} />}
+          <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
+            <AppRoutes isDataReady={isDataReady} />
+          </main>
+        </div>
+      </div>
 
       {isMobile && <MobileTabBar />}
     </MenuContext.Provider>
