@@ -117,7 +117,6 @@ function useWithLocalFallback<T extends { id: string }>(
   table: any,
   isOnline: boolean,
   pendingCount: number | null,
-  initialLoadDone: boolean,
 ): T[] | undefined {
   useEffect(() => {
     if (convexData !== undefined && pendingCount === 0) {
@@ -126,21 +125,15 @@ function useWithLocalFallback<T extends { id: string }>(
   }, [convexData, pendingCount, table]);
 
   // Don't decide anything until we know the pending queue size.
-  if (pendingCount === null) {
-    return undefined;
-  }
+  if (pendingCount === null) return undefined;
 
   if (!isOnline || pendingCount > 0) {
     return localData ?? convexData;
   }
 
-  if (convexData === undefined) {
-    // Before first load: return undefined so the loading spinner shows.
-    // After first load: Convex is momentarily reconnecting — fall back to local
-    // data (already synced) so we don't flash empty states.
-    return initialLoadDone ? (localData ?? undefined) : undefined;
-  }
-
+  // When online, prefer live Convex data. If it's momentarily undefined
+  // (reconnecting), return undefined — useSticky in the provider will
+  // serve the last pinned value so the UI never flashes empty.
   return convexData;
 }
 
@@ -191,22 +184,17 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const localCriteria = useLiveQuery(() => localDb.criteria.toArray(), [resetKey]);
   const localEntries = useLiveQuery(() => localDb.scoreEntries.toArray(), [resetKey]);
 
-  // Ref that becomes true once every data collection has resolved at least once.
-  // Unlike isDataReady state, this is updated mid-render (safe for refs) so the
-  // NEXT call to useWithLocalFallback immediately gets the updated value.
-  const initialLoadDoneRef = useRef(false);
-
   const rawSemesters = useWithLocalFallback(
-    mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount, initialLoadDoneRef.current
+    mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount
   );
   const rawCourses = useWithLocalFallback(
-    mappedCourses, localCourses, localDb.courses, isOnline, pendingCount, initialLoadDoneRef.current
+    mappedCourses, localCourses, localDb.courses, isOnline, pendingCount
   );
   const rawCriteria = useWithLocalFallback(
-    mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount, initialLoadDoneRef.current
+    mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount
   );
   const rawScoreEntries = useWithLocalFallback(
-    mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount, initialLoadDoneRef.current
+    mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount
   );
 
   const rawSortedCourses = useMemo(() => {
@@ -222,22 +210,15 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const criteria = useSticky(rawCriteria);
   const scoreEntries = useSticky(rawScoreEntries);
 
-  // Track whether all data collections have resolved at least once.
-  // Once true it stays true for the lifetime of the provider.
-  const [isDataReady, setIsDataReady] = useState(false);
-
-  useEffect(() => {
-    if (
-      !isDataReady &&
-      pendingCount !== null &&
-      semesters !== undefined &&
-      courses !== undefined &&
-      criteria !== undefined &&
-      scoreEntries !== undefined
-    ) {
-      setIsDataReady(true);
-    }
-  }, [isDataReady, pendingCount, semesters, courses, criteria, scoreEntries]);
+  // Synchronously derive readiness — no useEffect lag.
+  // Once all four sticky values are non-undefined and the pending-count is
+  // known, we are safe to render children.
+  const isDataReady =
+    pendingCount !== null &&
+    semesters !== undefined &&
+    courses !== undefined &&
+    criteria !== undefined &&
+    scoreEntries !== undefined;
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
