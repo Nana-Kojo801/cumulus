@@ -109,7 +109,7 @@ export function AppShell() {
       posthog?.reset();
     }
   }, [isSignedIn, clerkUser, clerkLoaded, posthog]);
-  const { isOnline, pendingCount, isDataReady } = useSyncContext();
+  const { isOnline, pendingCount, isDataReady, semesters, courses, criteria, scoreEntries } = useSyncContext();
   const browserOnline = useOnlineStatus();
 
   const [cachedUser, setCachedUser] = useState<{ onboardingComplete: boolean } | null>(() => {
@@ -185,7 +185,6 @@ export function AppShell() {
   if (!isDataReady) return <LoadingSpinner />;
 
   // Set global honor theme
-  const { semesters, courses, criteria, scoreEntries } = useSyncContext();
   if (semesters && courses && criteria && scoreEntries) {
     const { gpa } = cumulativeGPA(semesters, courses, criteria, scoreEntries);
     const honor = honorFor(gpa);
