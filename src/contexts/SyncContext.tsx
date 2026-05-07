@@ -85,6 +85,18 @@ export function useSyncContext() {
 
 import { useLiveQuery } from 'dexie-react-hooks';
 
+/**
+ * Once a value resolves to a non-undefined array it is "pinned" — subsequent
+ * undefined values (e.g. Convex reconnecting) are ignored and the last good
+ * value is returned instead. This prevents empty-state flashes on slow devices
+ * where render cycles can outpace data resolution.
+ */
+function useSticky<T>(value: T[] | undefined): T[] | undefined {
+  const ref = useRef<T[] | undefined>(undefined);
+  if (value !== undefined) ref.current = value;
+  return ref.current;
+}
+
 function syncTable<T extends { id: string }>(table: any, data: T[]) {
   return localDb.transaction('rw', table, async () => {
     // Some Dexie versions/configurations don't support table.keys() directly.
@@ -197,33 +209,35 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount, initialLoadDoneRef.current
   );
 
-  const courses = useMemo(() => {
+  const rawSortedCourses = useMemo(() => {
     if (!rawCourses) return undefined;
     return [...rawCourses].sort((a, b) => a.name.localeCompare(b.name));
   }, [rawCourses]);
+
+  // Sticky wrappers: once data resolves, it never goes back to undefined.
+  // This prevents empty-state flashes on slow devices where render cycles
+  // can outpace data resolution during Convex reconnects.
+  const semesters = useSticky(rawSemesters);
+  const courses = useSticky(rawSortedCourses);
+  const criteriaSticky = useSticky(criteria);
+  const scoreEntriesSticky = useSticky(scoreEntries);
 
   // Track whether all data collections have resolved at least once.
   // Once true it stays true for the lifetime of the provider.
   const [isDataReady, setIsDataReady] = useState(false);
 
-  // Update the ref mid-render (valid React pattern for refs) so subsequent
-  // renders within the same cycle benefit immediately.
-  if (
-    !initialLoadDoneRef.current &&
-    pendingCount !== null &&
-    semesters !== undefined &&
-    courses !== undefined &&
-    criteria !== undefined &&
-    scoreEntries !== undefined
-  ) {
-    initialLoadDoneRef.current = true;
-  }
-
   useEffect(() => {
-    if (initialLoadDoneRef.current && !isDataReady) {
+    if (
+      !isDataReady &&
+      pendingCount !== null &&
+      semesters !== undefined &&
+      courses !== undefined &&
+      criteriaSticky !== undefined &&
+      scoreEntriesSticky !== undefined
+    ) {
       setIsDataReady(true);
     }
-  }, [isDataReady, semesters, courses, criteria, scoreEntries, pendingCount]);
+  }, [isDataReady, pendingCount, semesters, courses, criteriaSticky, scoreEntriesSticky]);
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
@@ -243,7 +257,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [isOnline, convex, refreshPendingCount]);
 
   return (
-    <SyncContext.Provider value={{ semesters, courses, criteria, scoreEntries, isOnline, pendingCount, isDataReady, refreshPendingCount }}>
+    <SyncContext.Provider value={{ semesters, courses, criteria: criteriaSticky, scoreEntries: scoreEntriesSticky, isOnline, pendingCount, isDataReady, refreshPendingCount }}>
       {children}
     </SyncContext.Provider>
   );
