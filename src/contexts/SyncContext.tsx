@@ -196,16 +196,16 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   // NEXT call to useWithLocalFallback immediately gets the updated value.
   const initialLoadDoneRef = useRef(false);
 
-  const semesters = useWithLocalFallback(
+  const rawSemesters = useWithLocalFallback(
     mappedSemesters, localSemesters, localDb.semesters, isOnline, pendingCount, initialLoadDoneRef.current
   );
   const rawCourses = useWithLocalFallback(
     mappedCourses, localCourses, localDb.courses, isOnline, pendingCount, initialLoadDoneRef.current
   );
-  const criteria = useWithLocalFallback(
+  const rawCriteria = useWithLocalFallback(
     mappedCriteria, localCriteria, localDb.criteria, isOnline, pendingCount, initialLoadDoneRef.current
   );
-  const scoreEntries = useWithLocalFallback(
+  const rawScoreEntries = useWithLocalFallback(
     mappedEntries, localEntries, localDb.scoreEntries, isOnline, pendingCount, initialLoadDoneRef.current
   );
 
@@ -219,8 +219,8 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   // can outpace data resolution during Convex reconnects.
   const semesters = useSticky(rawSemesters);
   const courses = useSticky(rawSortedCourses);
-  const criteriaSticky = useSticky(criteria);
-  const scoreEntriesSticky = useSticky(scoreEntries);
+  const criteria = useSticky(rawCriteria);
+  const scoreEntries = useSticky(rawScoreEntries);
 
   // Track whether all data collections have resolved at least once.
   // Once true it stays true for the lifetime of the provider.
@@ -232,12 +232,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       pendingCount !== null &&
       semesters !== undefined &&
       courses !== undefined &&
-      criteriaSticky !== undefined &&
-      scoreEntriesSticky !== undefined
+      criteria !== undefined &&
+      scoreEntries !== undefined
     ) {
       setIsDataReady(true);
     }
-  }, [isDataReady, pendingCount, semesters, courses, criteriaSticky, scoreEntriesSticky]);
+  }, [isDataReady, pendingCount, semesters, courses, criteria, scoreEntries]);
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);
@@ -257,7 +257,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }, [isOnline, convex, refreshPendingCount]);
 
   return (
-    <SyncContext.Provider value={{ semesters, courses, criteria: criteriaSticky, scoreEntries: scoreEntriesSticky, isOnline, pendingCount, isDataReady, refreshPendingCount }}>
+    <SyncContext.Provider value={{ semesters, courses, criteria, scoreEntries, isOnline, pendingCount, isDataReady, refreshPendingCount }}>
       {children}
     </SyncContext.Provider>
   );
