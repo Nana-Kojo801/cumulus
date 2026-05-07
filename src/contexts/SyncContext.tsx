@@ -63,7 +63,7 @@ interface SyncContextValue {
   criteria: Criterion[] | undefined;
   scoreEntries: ScoreEntry[] | undefined;
   isOnline: boolean;
-  pendingCount: number;
+  pendingCount: number | null;
   isDataReady: boolean;
   refreshPendingCount: () => void;
 }
@@ -74,7 +74,7 @@ const SyncContext = createContext<SyncContextValue>({
   criteria: undefined,
   scoreEntries: undefined,
   isOnline: true,
-  pendingCount: 0,
+  pendingCount: null,
   isDataReady: false,
   refreshPendingCount: () => {},
 });
@@ -104,13 +104,19 @@ function useWithLocalFallback<T extends { id: string }>(
   localData: T[] | undefined,
   table: any,
   isOnline: boolean,
-  pendingCount: number
+  pendingCount: number | null
 ): T[] | undefined {
   useEffect(() => {
     if (convexData !== undefined && pendingCount === 0) {
       syncTable(table, convexData).catch(console.error);
     }
   }, [convexData, pendingCount, table]);
+
+  // If we don't know the pending count yet, we aren't ready to decide
+  // between local and remote data.
+  if (pendingCount === null) {
+    return undefined;
+  }
 
   if (!isOnline || pendingCount > 0) {
     return localData ?? convexData;
@@ -128,7 +134,7 @@ function useWithLocalFallback<T extends { id: string }>(
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const isOnline = useOnlineStatus();
   const convex = useConvex();
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
   const { isLoaded, user } = useUser();
 
   const userId = user?.id;
@@ -197,6 +203,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (
       !isDataReady &&
+      pendingCount !== null &&
       semesters !== undefined &&
       courses !== undefined &&
       criteria !== undefined &&
@@ -204,7 +211,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     ) {
       setIsDataReady(true);
     }
-  }, [isDataReady, semesters, courses, criteria, scoreEntries]);
+  }, [isDataReady, pendingCount, semesters, courses, criteria, scoreEntries]);
 
   const refreshPendingCount = useCallback(() => {
     getPendingCount().then(setPendingCount);

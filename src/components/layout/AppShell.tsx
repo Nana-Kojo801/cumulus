@@ -31,11 +31,37 @@ const USER_CACHE_KEY = 'cumulus-user-v1';
 
 function LoadingSpinner() {
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
-      <div
-        className="w-7 h-7 rounded-full animate-spin"
-        style={{ border: '2px solid var(--c-line-2)', borderTopColor: 'var(--c-accent)' }}
-      />
+    <div className="h-screen flex flex-col items-center justify-center gap-6" style={{ background: 'var(--c-bg)' }}>
+      <div className="relative flex items-center justify-center">
+        <div
+          className="w-10 h-10 rounded-full animate-spin"
+          style={{ 
+            border: '2px solid transparent', 
+            borderTopColor: 'var(--c-accent)', 
+            borderRightColor: 'var(--c-accent)',
+            opacity: 0.8
+          }}
+        />
+        <div
+          className="absolute w-6 h-6 rounded-full animate-spin"
+          style={{ 
+            border: '2px solid transparent', 
+            borderBottomColor: 'var(--c-accent)', 
+            borderLeftColor: 'var(--c-accent)',
+            animationDirection: 'reverse',
+            animationDuration: '0.8s',
+            opacity: 0.4
+          }}
+        />
+      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        style={{ fontSize: 13, color: 'var(--c-text-4)', fontWeight: 500, letterSpacing: '0.02em' }}
+      >
+        Preparing your dashboard...
+      </motion.div>
     </div>
   );
 }
@@ -141,13 +167,21 @@ export function AppShell() {
   const openMenu = useCallback(() => {}, []);
 
   const offlineCanBoot = !browserOnline && offlineBootReady && hasOfflineData && !!cachedUser;
+  const effectiveUser = convexUser ?? cachedUser;
+  
+  // 1. Wait for Clerk to load
   if (!clerkLoaded && !offlineCanBoot) return <LoadingSpinner />;
   if (clerkLoaded && !isSignedIn && !offlineCanBoot) return <AuthScreen />;
 
-  const effectiveUser = convexUser ?? cachedUser;
-  if (convexUser === undefined && !cachedUser) return <LoadingSpinner />;
-  if (!effectiveUser || !effectiveUser.onboardingComplete) return <OnboardingScreen />;
+  // 2. Wait for User data. 
+  // If online, we prefer to wait for the fresh convexUser to avoid stale cache flickers.
+  if (browserOnline && convexUser === undefined) return <LoadingSpinner />;
+  if (!effectiveUser) return <LoadingSpinner />;
+  
+  // 3. Handle Onboarding
+  if (!effectiveUser.onboardingComplete) return <OnboardingScreen />;
 
+  // 4. Wait for Data Sync
   if (!isDataReady) return <LoadingSpinner />;
 
   // Set global honor theme
@@ -169,7 +203,7 @@ export function AppShell() {
       <div className="flex flex-col h-full overflow-hidden w-full">
         {/* Offline / sync indicator */}
         <AnimatePresence initial={false}>
-          {(!isOnline || pendingCount > 0) && (
+          {(!isOnline || (pendingCount !== null && pendingCount > 0)) && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
