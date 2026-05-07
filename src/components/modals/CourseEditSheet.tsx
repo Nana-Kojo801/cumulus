@@ -4,7 +4,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { Chip } from '@/components/ui/Chip';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select';
 import { useSemesters } from '@/hooks/useSemesters';
 import { useCourse } from '@/hooks/useCourses';
 import { api } from '../../../convex/_generated/api';
@@ -150,25 +150,21 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
             </div>
           </div>
 
-          {sorted.length > 1 && (
-            <div className="flex flex-col gap-2">
+          {sorted.length > 0 && (
+            <div className="flex flex-col gap-1.5">
               <Label>Semester</Label>
-              <div className="flex flex-col gap-1.5">
-                {sorted.map(sem => (
-                  <button
-                    key={sem.id}
-                    onClick={() => setSemesterId(sem.id)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-(--radius-r3) border text-left transition-all cursor-pointer ${
-                      semesterId === sem.id
-                        ? 'bg-(--c-accent-bg) border-(--c-accent)/30 text-(--c-text)'
-                        : 'bg-(--c-surface-2) border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3)'
-                    }`}
-                  >
-                    <span className="flex-1 text-[14px]">{sem.name}</span>
-                    {sem.status === 'active' && <Chip variant="accent" className="text-[11px]">Active</Chip>}
-                  </button>
-                ))}
-              </div>
+              <Select value={semesterId} onValueChange={setSemesterId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select semester..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {sorted.map(sem => (
+                    <SelectItem key={sem.id} value={sem.id}>
+                      {sem.name} {sem.status === 'active' ? '— Active' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
