@@ -220,7 +220,9 @@ export function AppShell() {
 
   return (
     <MenuContext.Provider value={{ open: openMenu }}>
-      <div className="flex flex-col h-full overflow-hidden w-full">
+      {/* Relative wrapper so the overlay sits inside the shell */}
+      <div className="relative flex flex-col h-full overflow-hidden w-full">
+
         {/* Offline / sync indicator */}
         <AnimatePresence initial={false}>
           {(!isOnline || (pendingCount !== null && pendingCount > 0)) && (
@@ -230,34 +232,42 @@ export function AppShell() {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25 }}
               className="z-[500] flex items-center justify-center text-[11px] font-semibold gap-2 shrink-0 overflow-hidden"
-              style={{
-                background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)',
-                color: 'white',
-              }}
+              style={{ background: isOnline ? 'var(--c-accent)' : 'var(--c-grade-c)', color: 'white' }}
             >
               <div className="py-1.5 flex items-center gap-2">
                 {isOnline ? (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" />
-                    Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…
-                  </>
+                  <><div className="w-2 h-2 rounded-full bg-white/70 animate-pulse" /> Syncing {pendingCount} change{pendingCount !== 1 ? 's' : ''}…</>
                 ) : (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-white/70" />
-                    Offline — changes saved locally
-                  </>
+                  <><div className="w-2 h-2 rounded-full bg-white/70" /> Offline — changes saved locally</>
                 )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Content — always mounted so screens read from context BEFORE visible */}
         <div className="c-app flex flex-1 overflow-hidden relative" style={{ height: 'auto' }}>
           {!isMobile && <Sidebar collapsed={isTablet} />}
           <main className={cn('flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]', isMobile && 'pb-16')}>
             <AppRoutes isDataReady={isDataReady} />
           </main>
         </div>
+
+        {/* Overlay spinner — fades out when data is ready, revealing already-rendered content */}
+        <AnimatePresence>
+          {!isDataReady && (
+            <motion.div
+              key="data-overlay"
+              className="absolute inset-0 z-[999]"
+              style={{ background: 'var(--c-bg)' }}
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <LoadingSpinner />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {isMobile && <MobileTabBar />}
