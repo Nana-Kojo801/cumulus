@@ -1,7 +1,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useQuery, useConvex } from 'convex/react';
+import { useQuery, useConvex, useConvexAuth } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { localDb, clearAllLocalData } from '@/lib/localDb';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
@@ -141,6 +141,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const isOnline = useOnlineStatus();
   const convex = useConvex();
   const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const { isAuthenticated: convexAuthenticated } = useConvexAuth();
   const { isLoaded, user } = useUser();
 
   const userId = user?.id;
@@ -211,9 +212,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const scoreEntries = useSticky(rawScoreEntries);
 
   // Synchronously derive readiness — no useEffect lag.
-  // Once all four sticky values are non-undefined and the pending-count is
-  // known, we are safe to render children.
+  // Require Convex auth before declaring ready: unauthenticated queries return
+  // empty arrays (not undefined), which would prematurely flip isDataReady and
+  // expose an empty-state flash before real data arrives.
   const isDataReady =
+    (convexAuthenticated || !isOnline) &&
     pendingCount !== null &&
     semesters !== undefined &&
     courses !== undefined &&
