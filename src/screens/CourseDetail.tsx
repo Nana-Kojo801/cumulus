@@ -54,6 +54,17 @@ export function CourseDetail() {
     api.courses.update,
     'courses/update',
     (args) => args,
+    undefined,
+    (localStore, args) => {
+      const current = localStore.getQuery(api.courses.list, {});
+      if (current !== undefined) {
+        localStore.setQuery(
+          api.courses.list,
+          {},
+          current.map((c: any) => c._id === args.id ? { ...c, ...args } : c),
+        );
+      }
+    },
   );
 
   const course = useCourse(id);
