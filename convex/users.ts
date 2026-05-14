@@ -50,7 +50,35 @@ export const completeOnboarding = mutation({
     if (!identity) throw new Error('Not authenticated');
     const user = await userByExternalId(ctx, identity.subject);
     if (!user) throw new Error('User not found');
-    await ctx.db.patch(user._id, { onboardingComplete: true });
+    await ctx.db.patch(user._id, { onboardingComplete: true, onboardingStep: undefined });
+  },
+});
+
+export const saveOnboardingStep = mutation({
+  args: { step: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+    const user = await userByExternalId(ctx, identity.subject);
+    if (!user) throw new Error('User not found');
+    await ctx.db.patch(user._id, { onboardingStep: args.step });
+  },
+});
+
+export const updateTour = mutation({
+  args: {
+    tourDismissed: v.optional(v.boolean()),
+    tourCompleted: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+    const user = await userByExternalId(ctx, identity.subject);
+    if (!user) throw new Error('User not found');
+    const patch: Record<string, unknown> = {};
+    if (args.tourDismissed !== undefined) patch.tourDismissed = args.tourDismissed;
+    if (args.tourCompleted !== undefined) patch.tourCompleted = args.tourCompleted;
+    await ctx.db.patch(user._id, patch);
   },
 });
 

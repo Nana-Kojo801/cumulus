@@ -13,6 +13,8 @@ import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { clearAllLocalData, hasAnyLocalData, localDb } from '@/lib/localDb';
 import { cumulativeGPA, honorFor } from '@/lib/calculations';
 
+import { TourProvider } from '@/contexts/TourContext';
+import { TourSpotlight } from '@/components/tour/TourSpotlight';
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
 import { SemesterDetail } from '@/screens/SemesterDetail';
@@ -21,7 +23,7 @@ import { CourseEdit } from '@/screens/CourseEdit';
 import { Simulator } from '@/screens/Simulator';
 import { Settings } from '@/screens/Settings';
 import { CanvasSyncPreview } from '@/screens/CanvasSyncPreview';
-import { OnboardingScreen } from '@/screens/OnboardingScreen';
+import { OnboardingScreen } from '@/screens/Onboarding';
 import { AuthScreen } from '@/screens/AuthScreen';
 
 const MenuContext = createContext<{ open: () => void }>({ open: () => {} });
@@ -203,7 +205,10 @@ export function AppShell() {
   if (!effectiveUser) return <LoadingSpinner />;
   
   // 3. Handle Onboarding
-  if (!effectiveUser.onboardingComplete) return <OnboardingScreen />;
+  if (!effectiveUser.onboardingComplete) {
+    const initialStep = (convexUser as any)?.onboardingStep ?? 1;
+    return <OnboardingScreen initialStep={initialStep} />;
+  }
 
   // Set global honor theme
   if (semesters && courses && criteria && scoreEntries) {
@@ -219,6 +224,7 @@ export function AppShell() {
   const isTablet = width > 640 && width <= 900;
 
   return (
+    <TourProvider>
     <MenuContext.Provider value={{ open: openMenu }}>
       {/* Relative wrapper so the overlay sits inside the shell */}
       <div className="relative flex flex-col h-full overflow-hidden w-full">
@@ -271,20 +277,23 @@ export function AppShell() {
       </div>
 
       {isMobile && <MobileTabBar />}
+      <TourSpotlight />
     </MenuContext.Provider>
+    </TourProvider>
   );
 }
 
 const TAB_ITEMS = [
-  { to: '/',          icon: IconHome,     label: 'Home',      end: true },
-  { to: '/semesters', icon: IconCalendar, label: 'Semesters', end: false },
-  { to: '/simulator', icon: IconBarChart, label: 'Simulate',  end: false },
-  { to: '/settings',  icon: IconSliders,  label: 'Settings',  end: false },
-] as const;
+  { to: '/',          icon: IconHome,     label: 'Home',      end: true,  tourAttr: undefined },
+  { to: '/semesters', icon: IconCalendar, label: 'Semesters', end: false, tourAttr: undefined },
+  { to: '/simulator', icon: IconBarChart, label: 'Simulate',  end: false, tourAttr: 'simulator-link' },
+  { to: '/settings',  icon: IconSliders,  label: 'Settings',  end: false, tourAttr: undefined },
+];
 
 function MobileTabBar() {
   return (
     <nav
+      data-tour="navigation"
       className="fixed bottom-0 inset-x-0 z-30 flex"
       style={{
         background: 'oklch(from var(--c-surface) l c h / 0.85)',
@@ -296,8 +305,8 @@ function MobileTabBar() {
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
-      {TAB_ITEMS.map(({ to, icon: Icon, label, end }) => (
-        <NavLink key={to} to={to} end={end} className="flex-1">
+      {TAB_ITEMS.map(({ to, icon: Icon, label, end, tourAttr }) => (
+        <NavLink key={to} to={to} end={end} className="flex-1" {...(tourAttr ? { 'data-tour': tourAttr } : {})}>
           {({ isActive }) => (
             <div className="flex flex-col items-center gap-0.5 py-2.5">
               <motion.div

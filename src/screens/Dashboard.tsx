@@ -16,6 +16,9 @@ import { fmtGPA, fmtPct, displayCourseName } from '@/lib/utils';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { GradePill } from '@/components/ui/GradePill';
 import { CourseEditSheet } from '@/components/modals/CourseEditSheet';
+import { useTour } from '@/contexts/TourContext';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 
 const rowItem = {
   hidden: { opacity: 0, x: -6 },
@@ -128,9 +131,30 @@ export function Dashboard() {
   const rawCourses = useCourses();
   const rawCriteria = useCriteria();
   const rawEntries = useScoreEntries();
+  const { startTour } = useTour();
+  const convexUser = useQuery(api.users.current);
+  const updateTour = useMutation(api.users.updateTour);
 
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [showAddCourse, setShowAddCourse] = useState(false);
+  const [tourBannerDismissed, setTourBannerDismissed] = useState(false);
+
+  const showTourBanner = !tourBannerDismissed
+    && convexUser !== undefined
+    && convexUser !== null
+    && !convexUser.tourDismissed
+    && !convexUser.tourCompleted;
+
+  function handleDismissTour() {
+    setTourBannerDismissed(true);
+    updateTour({ tourDismissed: true }).catch(() => {});
+  }
+
+  function handleStartTour() {
+    setTourBannerDismissed(true);
+    updateTour({ tourDismissed: true }).catch(() => {});
+    startTour();
+  }
 
   function toggleOpen(id: string) {
     setOpenIds(prev => {
@@ -168,11 +192,36 @@ export function Dashboard() {
       <Topbar title="Dashboard" onMenuOpen={onMenuOpen} />
       <div className="flex-1 overflow-y-auto p-5 lg:p-7 flex flex-col gap-6">
 
+        {/* Tour prompt banner */}
+        {showTourBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl"
+            style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent)/30' }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] font-semibold text-(--c-text)">Want a quick tour?</div>
+              <div className="text-[12px] text-(--c-text-3)">We'll show you how everything works.</div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="primary" size="sm" onClick={handleStartTour}>Show me around</Button>
+              <button
+                onClick={handleDismissTour}
+                className="text-[12px] text-(--c-text-4) hover:text-(--c-text-3) transition-colors cursor-pointer"
+              >
+                Maybe later
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Hero card */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          data-tour="gpa-ring"
         >
           <div className="hero-card">
             {/* Mobile layout */}
@@ -275,6 +324,7 @@ export function Dashboard() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, delay: 0.2 }}
+          data-tour="course-list"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="c-section-head" style={{ margin: 0 }}>
@@ -283,6 +333,16 @@ export function Dashboard() {
                 <span className="sub">{activeSemester.name}</span>
               )}
             </div>
+            {activeSemester && (
+              <Button
+                data-tour="add-course"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddCourse(true)}
+              >
+                <IconPlus size={13} /> Add Course
+              </Button>
+            )}
             </div>
 
           {activeCourses.length === 0 ? (

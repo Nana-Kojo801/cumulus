@@ -123,7 +123,7 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
+      <nav data-tour="navigation" className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
         {/* Workspace */}
         <section>
           {(!collapsed || isDrawer) && (
@@ -134,7 +134,9 @@ export function Sidebar({ collapsed = false, onClose }: SidebarProps) {
           <div className="flex flex-col gap-0.5">
             <NavItem to="/" icon={IconHome} label="Dashboard" collapsed={collapsed && !isDrawer} end onClick={onClose} />
             <NavItem to="/semesters" icon={IconCalendar} label="Semesters" collapsed={collapsed && !isDrawer} onClick={onClose} />
-            <NavItem to="/simulator" icon={IconBarChart} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            <div data-tour="simulator-link">
+              <NavItem to="/simulator" icon={IconBarChart} label="GPA Simulator" collapsed={collapsed && !isDrawer} onClick={onClose} />
+            </div>
           </div>
         </section>
 
