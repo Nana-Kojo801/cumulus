@@ -83,7 +83,7 @@ export const executeSync = mutation({
           .collect();
         const candidate = byName.find(s => !s.userId || s.userId === userId);
         if (candidate) {
-          existingSem = candidate as typeof existingSem;
+          existingSem = candidate;
           if (!candidate.userId) {
             await ctx.db.patch(candidate._id, { userId });
           }
