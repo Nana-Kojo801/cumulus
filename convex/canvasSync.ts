@@ -72,7 +72,23 @@ export const executeSync = mutation({
       if (selectedCourses.length === 0) continue;
 
       let semesterId: Id<'semesters'>;
-      const existingSem = userSemesters.find(s => s.name === sem.name);
+      let existingSem = userSemesters.find(s => s.name === sem.name);
+
+      // Fallback: find by name across all records (catches pre-migration semesters
+      // without userId that are invisible to the by_userId index).
+      if (!existingSem) {
+        const byName = await ctx.db
+          .query('semesters')
+          .withIndex('by_name', q => q.eq('name', sem.name))
+          .collect();
+        const candidate = byName.find(s => !s.userId || s.userId === userId);
+        if (candidate) {
+          existingSem = candidate as typeof existingSem;
+          if (!candidate.userId) {
+            await ctx.db.patch(candidate._id, { userId });
+          }
+        }
+      }
 
       if (existingSem) {
         semesterId = existingSem._id;
@@ -99,8 +115,15 @@ export const executeSync = mutation({
       for (const course of selectedCourses) {
         const courseCredits = creditsMap.get(course.canvasId) ?? 3;
 
-        // Find course within THIS user's courses only — no global canvasId scan.
-        const existingCourse = userCourses.find(c => c.canvasId === course.canvasId);
+        // Find course: prefer explicit Convex ID from preview (handles pre-migration
+        // records that may lack userId in the index), fall back to canvasId scan.
+        let existingCourse = course.existingCumulusId
+          ? (userCourses.find(c => c._id === course.existingCumulusId)
+              ?? await ctx.db.get(course.existingCumulusId as Id<'courses'>))
+          : null;
+        if (!existingCourse) {
+          existingCourse = userCourses.find(c => Number(c.canvasId) === Number(course.canvasId)) ?? null;
+        }
 
         let courseId: Id<'courses'>;
         if (existingCourse) {
@@ -109,6 +132,8 @@ export const executeSync = mutation({
             name: course.name,
             code: course.code,
             credits: courseCredits,
+            userId,        // migrate pre-schema records that lacked userId
+            semesterId,    // ensure course is in the correct semester
           });
         } else {
           courseId = await ctx.db.insert('courses', {
