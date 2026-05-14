@@ -292,30 +292,28 @@ export function CourseDetail() {
                         </div>
                       </div>
                       <ProgressBar value={avg ?? 0} />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[12px] text-(--c-text-3)">
-                          {scored}/{critEntries.length} scored · avg {avg !== null ? `${avg.toFixed(1)}%` : '—'}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isLocked}
-                            onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
-                          >
-                            <IconEdit size={13} />
-                          </button>
-                          <button
-                            className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isLocked}
-                            onClick={() => setDeleteCritId(crit.id)}
-                          >
-                            <IconTrash size={13} />
-                          </button>
-                        </div>
+                      <span className="text-[12px] text-(--c-text-3)">
+                        {scored}/{critEntries.length} scored · avg {avg !== null ? `${avg.toFixed(1)}%` : '—'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="primary" size="sm" className="flex-1" disabled={isLocked} onClick={() => setScoringCriterionId(crit.id)}>
+                          Score
+                        </Button>
+                        <button
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isLocked}
+                          onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
+                        >
+                          <IconEdit size={13} />
+                        </button>
+                        <button
+                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isLocked}
+                          onClick={() => setDeleteCritId(crit.id)}
+                        >
+                          <IconTrash size={13} />
+                        </button>
                       </div>
-                      <Button variant="primary" size="sm" className="w-full" disabled={isLocked} onClick={() => setScoringCriterionId(crit.id)}>
-                        Score
-                      </Button>
                     </div>
 
                     {/* Desktop layout */}

@@ -41,6 +41,8 @@ export default defineSchema({
     weight: v.number(),
     instanceCount: v.number(),
     canvasGroupId: v.optional(v.number()),
+    manualScore: v.optional(v.number()),
+    manualScoreEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index('by_courseId', ['courseId'])

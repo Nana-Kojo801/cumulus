@@ -27,6 +27,8 @@ export interface Criterion {
   weight: number;
   instanceCount: number;
   canvasGroupId?: number;
+  manualScore?: number;
+  manualScoreEnabled?: boolean;
   createdAt: number;
 }
 

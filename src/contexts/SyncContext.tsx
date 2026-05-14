@@ -41,6 +41,8 @@ function mapCriterion(doc: Record<string, unknown>): Criterion {
     weight: doc.weight as number,
     instanceCount: doc.instanceCount as number,
     canvasGroupId: doc.canvasGroupId as number | undefined,
+    manualScore: doc.manualScore as number | undefined,
+    manualScoreEnabled: doc.manualScoreEnabled as boolean | undefined,
     createdAt: doc.createdAt as number,
   };
 }

@@ -42,6 +42,8 @@ export const update = mutation({
     name: v.optional(v.string()),
     weight: v.optional(v.number()),
     instanceCount: v.optional(v.number()),
+    manualScore: v.optional(v.number()),
+    manualScoreEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, ...rest } = args;

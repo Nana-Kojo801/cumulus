@@ -53,9 +53,17 @@ export const executeSync = mutation({
     const creditsMap = new Map(args.creditsByCanvasId.map(c => [c.canvasId, c.credits]));
     const selectedSet = new Set(args.selectedCanvasIds);
 
-    // Load all user's semesters for name lookup
+    // Load ALL user's semesters + courses upfront.
+    // Using global by_canvasId.first() is unsafe — it can grab another user's
+    // record when canvasIds collide across accounts, causing cross-user
+    // contamination and duplicate course creation.
     const userSemesters = await ctx.db
       .query('semesters')
+      .withIndex('by_userId', q => q.eq('userId', userId))
+      .collect();
+
+    const userCourses = await ctx.db
+      .query('courses')
       .withIndex('by_userId', q => q.eq('userId', userId))
       .collect();
 
@@ -84,18 +92,18 @@ export const executeSync = mutation({
           status: sem.status,
           createdAt: Date.now(),
         });
+        // Track newly created semester so subsequent lookups in this loop work.
+        userSemesters.push({ _id: semesterId, _creationTime: Date.now(), userId, name: sem.name, year: sem.year, term: sem.term, status: sem.status, createdAt: Date.now() });
       }
 
       for (const course of selectedCourses) {
         const courseCredits = creditsMap.get(course.canvasId) ?? 3;
 
-        let courseId: Id<'courses'>;
-        const existingCourse = await ctx.db
-          .query('courses')
-          .withIndex('by_canvasId', q => q.eq('canvasId', course.canvasId))
-          .first();
+        // Find course within THIS user's courses only — no global canvasId scan.
+        const existingCourse = userCourses.find(c => c.canvasId === course.canvasId);
 
-        if (existingCourse && existingCourse.userId === userId) {
+        let courseId: Id<'courses'>;
+        if (existingCourse) {
           courseId = existingCourse._id;
           await ctx.db.patch(existingCourse._id, {
             name: course.name,
@@ -112,6 +120,8 @@ export const executeSync = mutation({
             canvasId: course.canvasId,
             createdAt: Date.now(),
           });
+          // Track so re-sync within same call doesn't duplicate.
+          userCourses.push({ _id: courseId, _creationTime: Date.now(), userId, semesterId, code: course.code, name: course.name, shortName: undefined, credits: courseCredits, canvasId: course.canvasId, createdAt: Date.now() } as any);
         }
 
         const existingCriteria = await ctx.db
@@ -141,13 +151,17 @@ export const executeSync = mutation({
             });
           }
 
+          // Load entries for THIS criterion only — avoids by_canvasAssignmentId
+          // global scan that can match entries belonging to other users.
+          const criterionEntries = await ctx.db
+            .query('scoreEntries')
+            .withIndex('by_criterionId', q => q.eq('criterionId', criterionId))
+            .collect();
+
           for (const assignment of criterion.assignments) {
-            const existingEntry = await ctx.db
-              .query('scoreEntries')
-              .withIndex('by_canvasAssignmentId', q =>
-                q.eq('canvasAssignmentId', assignment.canvasAssignmentId)
-              )
-              .first();
+            const existingEntry = criterionEntries.find(
+              e => e.canvasAssignmentId === assignment.canvasAssignmentId,
+            );
 
             if (existingEntry) {
               if (!existingEntry.manuallyEdited) {

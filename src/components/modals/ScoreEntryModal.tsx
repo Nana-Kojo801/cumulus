@@ -36,10 +36,19 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
     'scoreEntries/saveAll',
     (args) => args,
   );
+  const updateCriterion = useOfflineMutation(
+    api.criteria.update,
+    'criteria/update',
+    (args) => args,
+  );
+
   const [localEntries, setLocalEntries] = useState<LocalEntry[]>([]);
+  const [overrideEnabled, setOverrideEnabled] = useState(false);
+  const [overrideScore, setOverrideScore] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     setLocalEntries(
       entries.map(e => ({
         id: e.id,
@@ -49,7 +58,9 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
         total: String(e.total),
       }))
     );
-  }, [entries, open]);
+    setOverrideEnabled(criterion.manualScoreEnabled ?? false);
+    setOverrideScore(criterion.manualScore !== undefined ? String(criterion.manualScore) : '');
+  }, [open, entries, criterion]);
 
   function updateEntry(id: string, field: 'label' | 'score' | 'total', value: string) {
     setLocalEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
@@ -75,6 +86,7 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
   }
 
   async function handleSave() {
+    // Save score entries
     const existingIds = new Set(entries.map(e => e.id));
     const toCreate = localEntries
       .filter(le => le.isNew)
@@ -95,6 +107,20 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
     const toDelete = entries.filter(e => !currentIds.has(e.id)).map(e => e.id);
 
     await saveAll({ criterionId: criterion.id, toCreate, toUpdate, toDelete });
+
+    // Save override state if changed
+    const overrideChanged =
+      overrideEnabled !== (criterion.manualScoreEnabled ?? false) ||
+      (overrideEnabled && overrideScore !== String(criterion.manualScore ?? ''));
+    if (overrideChanged) {
+      const parsedScore = parseFloat(overrideScore);
+      await updateCriterion({
+        id: criterion.id,
+        manualScoreEnabled: overrideEnabled,
+        manualScore: overrideEnabled && !isNaN(parsedScore) ? parsedScore : undefined,
+      });
+    }
+
     posthog?.capture('scores_saved', {
       entries_created: toCreate.length,
       entries_updated: toUpdate.length,
@@ -114,12 +140,16 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
     total: parseFloat(e.total) || 100,
     createdAt: 0,
   }));
-  const avg = criterionAverage(scoredEntries);
+
+  const displayAvg = overrideEnabled && overrideScore !== ''
+    ? parseFloat(overrideScore)
+    : criterionAverage(scoredEntries);
+  const avg = overrideEnabled && overrideScore !== '' ? parseFloat(overrideScore) : criterionAverage(scoredEntries);
   const contribution = avg !== null ? avg * criterion.weight / 100 : null;
 
   return (
     <Sheet open={open} onClose={onClose} fullHeight>
-      {/* Header — fixed */}
+      {/* Header */}
       <div className="px-5 pt-4 pb-3 border-b border-(--c-line) flex items-center gap-3 shrink-0">
         <span className="text-[15px] font-semibold text-(--c-text) flex-1 min-w-0 truncate">{criterion.name}</span>
         <Chip variant="accent" className="shrink-0">{criterion.weight}%</Chip>
@@ -131,28 +161,69 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
         </button>
       </div>
 
-      {/* Stats — fixed */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 p-4 border-b border-(--c-line) shrink-0">
-        <StatCard label="Average" value={avg !== null ? `${avg.toFixed(1)}%` : '—'} />
+        <StatCard label="Average" value={displayAvg !== null && !isNaN(displayAvg as number) ? `${(displayAvg as number).toFixed(1)}%` : '—'} />
         <StatCard
           label="Contribution"
-          value={contribution !== null ? `${contribution.toFixed(1)}/${criterion.weight}` : '—'}
+          value={contribution !== null && !isNaN(contribution) ? `${contribution.toFixed(1)}/${criterion.weight}` : '—'}
         />
-        <StatCard label="Scored" value={`${scored.length}/${localEntries.length}`} />
+        <StatCard label="Scored" value={overrideEnabled ? '—' : `${scored.length}/${localEntries.length}`} />
       </div>
 
-      {/* Instances label + Add button — fixed */}
+      {/* Override score toggle */}
+      <div className="px-4 py-3 border-b border-(--c-line) shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[13px] font-medium text-(--c-text)">Override Score</div>
+            <div className="text-[11px] text-(--c-text-3)">Set a manual percentage, ignoring instances</div>
+          </div>
+          <button
+            onClick={() => setOverrideEnabled(v => !v)}
+            className={cn(
+              'w-10 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer',
+              overrideEnabled ? 'bg-(--c-accent)' : 'bg-(--c-surface-3)',
+            )}
+          >
+            <div className={cn(
+              'w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform',
+              overrideEnabled ? 'left-[22px]' : 'left-[2px]',
+            )} />
+          </button>
+        </div>
+        {overrideEnabled && (
+          <div className="mt-2.5 flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              className="w-24 bg-(--c-bg-2) border border-(--c-accent) rounded-(--radius-r1) px-2 py-1.5 text-[14px] font-mono text-right text-(--c-text) outline-none focus:border-(--c-accent)"
+              value={overrideScore}
+              onChange={e => setOverrideScore(e.target.value)}
+              placeholder="0–100"
+              autoFocus
+            />
+            <span className="text-[13px] text-(--c-text-3)">%</span>
+          </div>
+        )}
+      </div>
+
+      {/* Instances label + Add button */}
       <div className="px-4 pt-3 pb-2 shrink-0 flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-[0.08em] font-bold text-(--c-text-4)">
-          Instances
+        <span className={cn(
+          'text-[11px] uppercase tracking-[0.08em] font-bold',
+          overrideEnabled ? 'text-(--c-text-4)/50' : 'text-(--c-text-4)',
+        )}>
+          Instances {overrideEnabled && <span className="normal-case tracking-normal font-normal">(ignored)</span>}
         </span>
-        <Button variant="ghost" size="sm" onClick={addEntry}>
+        <Button variant="ghost" size="sm" onClick={addEntry} disabled={overrideEnabled}>
           <IconPlus size={13} /> Add instance
         </Button>
       </div>
 
-      {/* Entries list — scrollable, fills remaining height */}
-      <div ref={listRef} className="flex-1 overflow-y-auto min-h-0 px-4 pb-2 flex flex-col gap-1.5">
+      {/* Entries list */}
+      <div ref={listRef} className={cn('flex-1 overflow-y-auto min-h-0 px-4 pb-2 flex flex-col gap-1.5', overrideEnabled && 'opacity-40 pointer-events-none')}>
         {localEntries.map((entry, idx) => {
           const isPending = entry.score === '';
           const scoreVal = entry.score !== '' ? parseFloat(entry.score) : null;
@@ -167,7 +238,6 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
                 isPending ? 'pending-stripe' : 'bg-(--c-surface-2)'
               )}
             >
-              {/* Name row */}
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[11px] text-(--c-text-4) w-5 text-right shrink-0">{idx + 1}</span>
                 <input
@@ -182,7 +252,6 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
                   <IconTrash size={13} />
                 </button>
               </div>
-              {/* Score row */}
               <div className="flex items-center gap-2 pl-7">
                 <input
                   type="number"
@@ -212,7 +281,7 @@ export function ScoreEntryModal({ open, onClose, criterion, course: _course, ent
         )}
       </div>
 
-      {/* Footer — fixed */}
+      {/* Footer */}
       <div className="shrink-0 border-t border-(--c-line) flex justify-end gap-2 px-5 py-4">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant="primary" onClick={handleSave}>Save</Button>

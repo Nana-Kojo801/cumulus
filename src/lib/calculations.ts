@@ -24,6 +24,11 @@ export function courseRunningGrade(
   let weightCompleted = 0;
 
   for (const crit of criteria) {
+    if (crit.manualScoreEnabled && crit.manualScore !== undefined) {
+      weightedSum += crit.manualScore * (crit.weight / 100);
+      weightCompleted += crit.weight;
+      continue;
+    }
     const critEntries = entries.filter(e => e.criterionId === crit.id);
     const avg = criterionAverage(critEntries);
     if (avg !== null) {
