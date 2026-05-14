@@ -299,20 +299,12 @@ export function CourseDetail() {
                         <Button variant="primary" size="sm" className="flex-1" disabled={isLocked} onClick={() => setScoringCriterionId(crit.id)}>
                           Score
                         </Button>
-                        <button
-                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-text) hover:bg-(--c-surface-2) transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={isLocked}
-                          onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}
-                        >
-                          <IconEdit size={13} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded text-(--c-text-3) hover:text-(--c-grade-e) hover:bg-(--c-grade-e)/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={isLocked}
-                          onClick={() => setDeleteCritId(crit.id)}
-                        >
-                          <IconTrash size={13} />
-                        </button>
+                        <Button variant="ghost" size="sm" disabled={isLocked} onClick={() => { setEditingCriterion(crit); setShowCriterionModal(true); }}>
+                          Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" disabled={isLocked} className="text-(--c-grade-e) hover:bg-(--c-grade-e)/10" onClick={() => setDeleteCritId(crit.id)}>
+                          Delete
+                        </Button>
                       </div>
                     </div>
 

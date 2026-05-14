@@ -291,53 +291,17 @@ export function Semesters() {
                           <span>{credits} credits</span>
                           {isActive && <span style={{ color: 'var(--c-accent)', fontWeight: 600 }}>· Active</span>}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            className="p-2 rounded-[10px] transition-all cursor-pointer"
-                            style={{ color: 'var(--c-text-3)' }}
-                            onClick={e => { e.stopPropagation(); setEditingSem(sem); }}
-                            onMouseEnter={e => {
-                              (e.currentTarget as HTMLElement).style.background = 'var(--c-surface-3)';
-                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text)';
-                            }}
-                            onMouseLeave={e => {
-                              (e.currentTarget as HTMLElement).style.background = 'transparent';
-                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text-3)';
-                            }}
-                            title="Edit semester"
-                          >
-                            <IconEdit size={14} />
-                          </button>
-                          <button
-                            className="p-2 rounded-[10px] transition-all cursor-pointer"
-                            style={{ color: 'var(--c-accent)' }}
-                            onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}
-                            onMouseEnter={e => {
-                              (e.currentTarget as HTMLElement).style.background = 'var(--c-accent-bg)';
-                            }}
-                            onMouseLeave={e => {
-                              (e.currentTarget as HTMLElement).style.background = 'transparent';
-                            }}
-                            title="Add course"
-                          >
-                            <IconPlus size={14} />
-                          </button>
-                          <button
-                            className="p-2 rounded-[10px] transition-all cursor-pointer"
-                            style={{ color: 'var(--c-text-4)' }}
-                            onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}
-                            onMouseEnter={e => {
-                              (e.currentTarget as HTMLElement).style.color = 'var(--c-grade-e)';
-                              (e.currentTarget as HTMLElement).style.background = 'var(--c-danger-bg)';
-                            }}
-                            onMouseLeave={e => {
-                              (e.currentTarget as HTMLElement).style.color = 'var(--c-text-4)';
-                              (e.currentTarget as HTMLElement).style.background = 'transparent';
-                            }}
-                            title="Delete semester"
-                          >
-                            <IconTrash size={14} />
-                          </button>
+                        {/* Desktop: labeled buttons */}
+                        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                          <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); setEditingSem(sem); }}>
+                            <IconEdit size={13} /> Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}>
+                            <IconPlus size={13} /> Add Course
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-(--c-grade-e) hover:bg-(--c-grade-e)/10" onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}>
+                            <IconTrash size={13} /> Delete
+                          </Button>
                         </div>
                       </div>
                       {/* Courses list */}
@@ -370,6 +334,22 @@ export function Semesters() {
                             );
                           })
                         )}
+                      </div>
+                      {/* Mobile: labeled buttons below the courses list */}
+                      <div
+                        className="flex sm:hidden items-center gap-2 px-4 py-3"
+                        style={{ borderTop: '1px solid var(--c-line)', background: 'var(--c-surface-2)' }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Button variant="ghost" size="sm" className="flex-1" onClick={e => { e.stopPropagation(); setEditingSem(sem); }}>
+                          <IconEdit size={13} /> Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" className="flex-1" onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}>
+                          <IconPlus size={13} /> Add Course
+                        </Button>
+                        <Button variant="ghost" size="sm" className="flex-1 text-(--c-grade-e) hover:bg-(--c-grade-e)/10" onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}>
+                          <IconTrash size={13} /> Delete
+                        </Button>
                       </div>
                     </div>
                   </div>
