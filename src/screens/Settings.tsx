@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   IconDownload, IconUpload, IconTrash, IconLink, IconUnlink,
-  IconSync, IconExternalLink, IconLoader, IconLogOut, IconBarChart,
+  IconSync, IconExternalLink, IconLoader, IconLogOut,
 } from '@/components/icons';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +23,6 @@ import { useClerk, useUser } from '@clerk/clerk-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDisplayPrefs } from '@/contexts/DisplayPrefsContext';
 import { useOfflineMutation } from '@/lib/useOfflineMutation';
-import { useTour } from '@/contexts/TourContext';
 
 function fmtDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -122,8 +121,6 @@ export function Settings() {
   const { user: clerkUser } = useUser();
   const { theme, setTheme } = useTheme();
   const { showShortNames, setShowShortNames } = useDisplayPrefs();
-  const { startTour } = useTour();
-  const updateTour = useMutation(api.users.updateTour);
 
   const [showClear, setShowClear] = useState(false);
   const [showDisconnect, setShowDisconnect] = useState(false);
@@ -208,12 +205,6 @@ export function Settings() {
   async function handleDisconnect() {
     await removeConnection({});
     toast('Disconnected from Canvas');
-  }
-
-  async function handleReplayTour() {
-    await updateTour({ tourDismissed: false, tourCompleted: false });
-    navigate('/');
-    startTour();
   }
 
   async function handleDeleteAccount() {
@@ -345,35 +336,8 @@ export function Settings() {
           )}
         </motion.section>
 
-        {/* App Tour */}
-        <motion.section {...section(2)}>
-          <h2 className="text-[18px] font-medium text-(--c-text) mb-3" style={{ letterSpacing: '-0.018em' }}>
-            App Tour
-          </h2>
-          <Card className="divide-y divide-(--c-line)">
-            <div className="flex items-center gap-4 p-4">
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'var(--c-surface-2)',
-                display: 'grid', placeItems: 'center',
-                color: 'var(--c-text-2)',
-                flexShrink: 0,
-              }}>
-                <IconBarChart size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[14px] font-medium text-(--c-text)">Replay guided tour</div>
-                <div className="text-[12px] text-(--c-text-3)">Walk through the app's key features again</div>
-              </div>
-              <Button variant="default" size="sm" onClick={handleReplayTour}>
-                Replay Tour
-              </Button>
-            </div>
-          </Card>
-        </motion.section>
-
         {/* Data Management */}
-        <motion.section {...section(3)}>
+        <motion.section {...section(2)}>
           <h2 className="text-[18px] font-medium text-(--c-text) mb-3" style={{ letterSpacing: '-0.018em' }}>
             Data Management
           </h2>
@@ -408,7 +372,7 @@ export function Settings() {
         </motion.section>
 
         {/* Account */}
-        <motion.section {...section(4)}>
+        <motion.section {...section(3)}>
           <h2 className="text-[18px] font-medium text-(--c-text) mb-3" style={{ letterSpacing: '-0.018em' }}>Account</h2>
           <Card className="divide-y divide-(--c-line)">
             <SettingRow

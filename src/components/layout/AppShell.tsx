@@ -13,8 +13,7 @@ import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { clearAllLocalData, hasAnyLocalData, localDb } from '@/lib/localDb';
 import { cumulativeGPA, honorFor } from '@/lib/calculations';
 
-import { TourProvider } from '@/contexts/TourContext';
-import { TourSpotlight } from '@/components/tour/TourSpotlight';
+
 import { Dashboard } from '@/screens/Dashboard';
 import { Semesters } from '@/screens/Semesters';
 import { SemesterDetail } from '@/screens/SemesterDetail';
@@ -224,7 +223,6 @@ export function AppShell() {
   const isTablet = width > 640 && width <= 900;
 
   return (
-    <TourProvider>
     <MenuContext.Provider value={{ open: openMenu }}>
       {/* Relative wrapper so the overlay sits inside the shell */}
       <div className="relative flex flex-col h-full overflow-hidden w-full">
@@ -277,9 +275,7 @@ export function AppShell() {
       </div>
 
       {isMobile && <MobileTabBar />}
-      <TourSpotlight />
     </MenuContext.Provider>
-    </TourProvider>
   );
 }
 
