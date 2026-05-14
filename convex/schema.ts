@@ -76,6 +76,9 @@ export default defineSchema({
     email: v.string(),
     externalId: v.string(),
     onboardingComplete: v.boolean(),
+    onboardingStep: v.optional(v.number()),
+    tourDismissed: v.optional(v.boolean()),
+    tourCompleted: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index('byExternalId', ['externalId']),
