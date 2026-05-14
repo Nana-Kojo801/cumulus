@@ -337,17 +337,17 @@ export function Semesters() {
                       </div>
                       {/* Mobile: labeled buttons below the courses list */}
                       <div
-                        className="flex sm:hidden items-center gap-2 px-4 py-3"
+                        className="grid grid-cols-2 gap-2 sm:hidden px-4 py-3"
                         style={{ borderTop: '1px solid var(--c-line)', background: 'var(--c-surface-2)' }}
                         onClick={e => e.stopPropagation()}
                       >
-                        <Button variant="ghost" size="sm" className="flex-1" onClick={e => { e.stopPropagation(); setEditingSem(sem); }}>
-                          <IconEdit size={13} /> Edit
-                        </Button>
-                        <Button variant="ghost" size="sm" className="flex-1" onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}>
+                        <Button variant="ghost" size="sm" className="col-span-2 justify-center" onClick={e => { e.stopPropagation(); setAddCourseSemId(sem.id); }}>
                           <IconPlus size={13} /> Add Course
                         </Button>
-                        <Button variant="ghost" size="sm" className="flex-1 text-(--c-grade-e) hover:bg-(--c-grade-e)/10" onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}>
+                        <Button variant="ghost" size="sm" className="justify-center" onClick={e => { e.stopPropagation(); setEditingSem(sem); }}>
+                          <IconEdit size={13} /> Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" className="justify-center text-(--c-grade-e) hover:bg-(--c-grade-e)/10" onClick={e => { e.stopPropagation(); setDeleteId(sem.id); }}>
                           <IconTrash size={13} /> Delete
                         </Button>
                       </div>
