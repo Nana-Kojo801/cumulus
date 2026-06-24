@@ -51,7 +51,9 @@
       "Bash(where ffmpeg *)",
       "Bash(node -e \"require\\('canvas'\\)\")",
       "Bash(node -e \"const sharp = require\\('sharp'\\); console.log\\('sharp ok', sharp.versions\\);\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "WebFetch(domain:community.instructure.com)",
+      "PowerShell($env:CLOUDFLARE_API_TOKEN = \\(Read-Host \"Cloudflare API token\"\\); cd canvas-proxy-worker; pnpx wrangler deploy)"
     ]
   }
 }

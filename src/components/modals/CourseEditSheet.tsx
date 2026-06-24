@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { IconMinus, IconPlus } from '@/components/icons';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -40,6 +39,7 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
   const [code, setCode] = useState('');
   const [shortName, setShortName] = useState('');
   const [credits, setCredits] = useState(3);
+  const [creditsInput, setCreditsInput] = useState('3');
   const [semesterId, setSemesterId] = useState('');
 
   // Use refs so the init effect only fires on open transition, not on every re-render
@@ -61,12 +61,14 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
       setCode(course.code ?? '');
       setShortName(course.shortName ?? '');
       setCredits(course.credits);
+      setCreditsInput(String(course.credits));
       setSemesterId(course.semesterId);
     } else {
       setName('');
       setCode('');
       setShortName('');
       setCredits(3);
+      setCreditsInput('3');
       setSemesterId(semId ?? sems.find(s => s.status === 'active')?.id ?? '');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,21 +132,27 @@ export function CourseEditSheet({ open, onClose, semesterId: initSemId, courseId
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Credit Hours</Label>
+              <Label htmlFor="cs-credits">Credit Hours</Label>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setCredits(c => Math.max(1, c - 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
-                >
-                  <IconMinus size={14} />
-                </button>
-                <span className="text-[22px] font-semibold tabular-nums text-(--c-text) w-8 text-center">{credits}</span>
-                <button
-                  onClick={() => setCredits(c => Math.min(6, c + 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-(--c-surface-2) border border-(--c-line) text-(--c-text-2) hover:bg-(--c-surface-3) transition-all cursor-pointer"
-                >
-                  <IconPlus size={14} />
-                </button>
+                <Input
+                  id="cs-credits"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={creditsInput}
+                  onChange={e => {
+                    setCreditsInput(e.target.value);
+                    const parsed = parseFloat(e.target.value);
+                    if (!isNaN(parsed) && parsed >= 0) setCredits(parsed);
+                  }}
+                  onBlur={() => {
+                    const parsed = parseFloat(creditsInput);
+                    const valid = !isNaN(parsed) && parsed >= 0 ? parsed : credits;
+                    setCredits(valid);
+                    setCreditsInput(String(valid));
+                  }}
+                  className="w-28"
+                />
                 <span className="text-[12px] text-(--c-text-3)">1–4 credits typical</span>
               </div>
             </div>
