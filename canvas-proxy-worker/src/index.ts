@@ -28,6 +28,7 @@ export default {
       headers.set("Authorization", auth);
     }
     headers.set("Content-Type", "application/json");
+    headers.set("User-Agent", "Cumulus/1.0 (nkabenyah@gmail.com)");
 
     const response = await fetch(targetUrl, {
       method: request.method,
